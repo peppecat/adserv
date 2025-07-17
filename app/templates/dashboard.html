@@ -1,0 +1,224 @@
+<html lang="en" data-theme="light" data-sidebar-behaviour="fixed" data-navigation-color="inverted" data-is-fluid="true"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta content="Webinning" name="author">
+    <meta name="cryptomus" content="98abd6f1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Theme CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://dashly-theme.com/assets/css/theme.bundle.css" id="stylesheetLTR">
+    <link rel="stylesheet" href="https://dashly-theme.com/assets/css/theme.rtl.bundle.css" id="stylesheetRTL" disabled="">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&amp;display=swap">
+    <link rel="stylesheet" onload="this.onload=null;this.removeAttribute('media');" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&amp;display=swap">
+    <link rel="stylesheet" href="/main_style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='main_style.css') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+
+    <!-- no-JS fallback -->
+    <noscript>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&display=swap">
+    </noscript>
+
+    <!-- Theme switcher script -->
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    
+    <!-- Мобильное устройство -->
+    <script>
+            document.addEventListener("DOMContentLoaded", function() {
+            const toggler = document.querySelector(".navbar-toggler");
+            const collapse = document.querySelector("#sidenavCollapse");
+
+            toggler.addEventListener("click", function() {
+                collapse.classList.toggle("show");
+            });
+        });
+    </script>
+    <style>
+        @media (max-width: 768px) {
+        .navbar-toggler {
+            display: block;
+        }
+    
+        .navbar-collapse {
+            display: none; /* Скрывать по умолчанию */
+        }
+    
+        .navbar-collapse.show {
+            display: block; /* Отображать при активации Collapse */
+        }
+    }
+    </style>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/static/images/ns.png" sizes="any">
+
+
+    <!-- Page Title -->
+    <title>Dashboard | Dashly</title>
+</head>
+<body>
+    
+<nav id="mainNavbar" class="navbar navbar-vertical navbar-expand-lg scrollbar bg-dark navbar-dark">
+            <!-- Theme configuration (navbar) -->
+            
+            <div class="container-fluid">
+                <!-- Brand -->
+                <a class="navbar-brand" href="/">
+                    
+                  <div class="logo">KEYZPANEL.COM</div>
+                    
+                </a>
+                <!-- Navbar toggler -->
+                <a href="javascript:void(0);" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#sidenavCollapse" aria-controls="sidenavCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </a>
+                <!-- Collapse -->
+                <div class="collapse navbar-collapse" id="sidenavCollapse">
+                    <!-- Navigation -->
+                    <ul class="navbar-nav mb-lg-7">
+                        <li class="nav-item">
+                            <a class="nav-link" href="/dashboard">
+                                <span>Dashboard</span>
+                            </a> 
+                            <a class="nav-link" href="/orders">
+                                <span>Order History</span>
+                            </a>
+                            <a class="nav-link" href="/profile">
+                                <span>Profile</span>
+                            </a> 
+                            <a class="nav-link" href="/logout">
+                                <span>Logout</span>
+                            </a>                            
+                        </li>
+                    </ul>
+                </div>
+                <!-- End of Collapse -->
+            </div>
+        </nav>
+<main>
+    
+<div class="container-fluid d-flex py-6 mb-4">
+    <form method="GET" action="/" class="d-none d-md-inline-block me-auto">
+        <div class="input-group input-group-merge">
+            <!-- Input -->
+            <input type="text" name="q" class="form-control bg-light-green border-light-green w-250px" placeholder="Search products" aria-label="Search for any term">
+
+            <!-- Button -->
+            <span class="input-group-text bg-light-green border-light-green p-0">
+                <!-- Button -->
+                <button class="btn btn-primary rounded-2 w-30px h-30px p-0 mx-1" type="submit" aria-label="Search button">
+                    <svg viewBox="0 0 24 24" height="16" width="16" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M0.750 9.812 A9.063 9.063 0 1 0 18.876 9.812 A9.063 9.063 0 1 0 0.750 9.812 Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" transform="translate(-3.056 4.62) rotate(-23.025)"></path>
+                        <path d="M16.221 16.22L23.25 23.25" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"></path>
+                    </svg>
+                </button>
+            </span>
+        </div>
+    </form>
+    <div class="d-flex align-items-center ms-auto me-n1 me-lg-n2">
+
+        <!-- Dropdown -->
+        <span class="btn btn-primary">
+          {{ (balances['bep20'] + balances['card']) | round(2) }} USD
+        </span>
+                <!-- Separator -->
+        <div class="vr bg-gray-700 mx-2 mx-lg-3"></div>
+
+
+        <button type="button" class="btn btn-dark">{{ username }}</button>
+
+        <!-- Separator -->
+
+        <!-- Dropdown -->
+
+
+        <!-- Button -->
+
+        <!-- Notifications offcanvas --><!-- Dropdown -->
+        <!-- Button -->
+
+        <!-- Custmization offcanvas -->
+        
+        <!-- Separator -->
+
+        <!-- Dropdown -->
+    </div>
+</div>
+        
+<div class="container">
+    <div class="home-container">
+        <div>
+         
+            <hr>
+        <div class="row">
+            
+
+          <div class="card" style="width: 18rem; margin-left: 30px; margin-top: 10px">
+            <a href="{{ url_for('product31') }}">
+                    <img class="card-img-top" src="{{ url_for('static', filename='images/steam/steam_cis.png') }}" alt="Card image cap" style="margin-top: 10px">
+              <div class="card-body">
+                <p class="card-text" style="text-align: center; font-size: 16px; margin: 0 auto">Steam TopUp</p>
+              </div>
+            </a>
+            </div>
+
+
+
+
+            <div class="card" style="width: 18rem; margin-left: 30px; margin-top: 10px">
+                <a href="{{ url_for('product33') }}">
+                        <img class="card-img-top" src="{{ url_for('static', filename='images/steam/steam_gift_usd.png') }}" alt="Card image cap" style="margin-top: 10px">
+                  <div class="card-body">
+                    <p class="card-text" style="text-align: center; font-size: 16px; margin: 0 auto">Steam Wallet Code | USA</p>
+                  </div>
+                </a>
+            </div>
+
+
+            <div class="card" style="width: 18rem; margin-left: 30px; margin-top: 10px">
+                <a href="{{ url_for('product34') }}">
+                        <img class="card-img-top" src="{{ url_for('static', filename='images/steam/steam_gift_eur.png') }}" alt="Card image cap" style="margin-top: 10px">
+                  <div class="card-body">
+                    <p class="card-text" style="text-align: center; font-size: 16px; margin: 0 auto">Steam Wallet Code | EU</p>
+                  </div>
+                </a>
+            </div>
+
+
+            <div class="card" style="width: 18rem; margin-left: 30px; margin-top: 10px">
+                <a href="{{ url_for('product35') }}">
+                        <img class="card-img-top" src="{{ url_for('static', filename='images/steam/steam_gift_pln.png') }}" alt="Card image cap" style="margin-top: 10px">
+                  <div class="card-body">
+                    <p class="card-text" style="text-align: center; font-size: 16px; margin: 0 auto">Steam Wallet Code | PL</p>
+                  </div>
+                </a>
+            </div>
+
+
+
+
+        </div>
+    </div>
+</div>
+</div>
+
+    <div>
+        
+    </div>
+</main>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.14.3/dist/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.1.3/dist/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+
+</body>
+</html>

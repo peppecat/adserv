@@ -1,0 +1,88 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #F5F5F5;
+    color: #333333;
+  }
+  
+  .container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  .col-11 {
+    background-color: #FFFFFF;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    min-width: 300px;
+  }
+  
+  h1 {
+    font-size: 24px;
+    margin-bottom: 1rem;
+  }
+  
+  .text-secondary {
+    color: #666666;
+    margin-bottom: 2rem;
+  }
+  
+  .form-control, input[type="text"], input[type="password"] {
+    border: none;
+    border-bottom: 1px solid #CCCCCC;
+    border-radius: 0;
+    padding: 0.5rem 0;
+    margin-bottom: 1rem;
+    transition: border-color 0.3s ease;
+    background-color: #f8fafbf5;
+  }
+  
+  .form-control:focus, input[type="text"]:focus, input[type="password"]:focus {
+    box-shadow: none;
+    border-color: #4A90E2;
+  }
+  
+  label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+  
+  .helptext {
+    font-size: 12px;
+    color: #666666;
+    display: block;
+    margin-top: 0.25rem;
+  }
+  
+  .btn-primary {
+    border: none;
+    background-color: #4A90E2;
+    color: #FFFFFF;
+    padding: 0.75rem 2rem;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .btn-primary:hover {
+    background-color: #3A7BC8;
+  }
+  
+  .text-muted {
+    font-size: 14px;
+  }
+  
+  .fw-semibold {
+    color: #4A90E2;
+    text-decoration: none;
+  }
+  .mx-400{
+    max-width: 350px;
+  }
+  .mx-400 .text-center{
+    text-align: center;
+  }

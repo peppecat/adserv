@@ -1,0 +1,346 @@
+.page-title-1 h1{
+    margin-bottom: 0px;
+}
+.page-title-1 span{
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+}
+/* Общий контейнер бонусов */
+/* Стили для Active Bonuses */
+#active_bonuses .bonus_wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#active_bonuses .bonus_card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease-in-out;
+    overflow: hidden;
+}
+
+#active_bonuses .bonus_card:hover {
+    transform: scale(1.02);
+}
+
+#active_bonuses .bonus_info {
+    flex: 1;
+    padding-right: 15px;
+}
+
+#active_bonuses .bonus_name {
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+#active_bonuses .bonus_type {
+    font-size: 14px;
+    color: #555;
+}
+
+#active_bonuses .bonus_type span {
+    font-weight: bold;
+    color: #007bff;
+}
+
+#active_bonuses .bonus_status {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #28a745;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+#active_bonuses .bonus_status.inactive {
+    background: #dc3545;
+}
+
+#active_bonuses .bonus_expiry {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #ff9800;
+}
+
+#active_bonuses .bonus_key {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 5px;
+}
+
+#active_bonuses .blurred_key {
+    font-size: 14px;
+    font-weight: bold;
+    background: rgba(0, 0, 0, 0.1);
+    padding: 5px 10px;
+    border-radius: 5px;
+    letter-spacing: 2px;
+    filter: blur(4px);
+    transition: filter 0.3s ease-in-out;
+}
+
+#active_bonuses .reveal_key {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+}
+
+#active_bonuses .reveal_key:hover {
+    background: #0056b3;
+}
+
+/* Стили для Welcome Gifts */
+#welcome_gifts .bonus_wrap {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+#welcome_gifts .bonus_card {
+    background: #1c1c1e;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    width: 280px;
+    position: relative;
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+#welcome_gifts .bonus_card:hover {
+    transform: scale(1.05);
+}
+
+#welcome_gifts .bonus_status {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: #28a745;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+#welcome_gifts .bonus_status.bundle {
+    background: #ff9800;
+}
+
+#welcome_gifts .bonus_name {
+    font-size: 18px;
+    margin-bottom: 5px;
+}
+
+
+#welcome_gifts .bundle_games {
+    font-size: 14px;
+    color: #ddd;
+    margin-bottom: 8px;
+}
+
+#welcome_gifts .bundle_price {
+    font-size: 16px;
+    font-weight: bold;
+}
+
+#welcome_gifts .old_price {
+    text-decoration: line-through;
+    color: #f44336;
+}
+
+#welcome_gifts .new_price {
+    color: #4caf50;
+}
+
+#welcome_gifts .claim_bonus, 
+#welcome_gifts .buy_bundle {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s ease-in-out;
+    margin-top: 10px;
+}
+
+#welcome_gifts .claim_bonus:hover, 
+#welcome_gifts .buy_bundle:hover {
+    background: #0056b3;
+}
+
+.welcome_gift hr{
+    margin-bottom: 1rem !important;
+}
+.welcome_gift{
+    margin-top: 3rem;
+}
+.welcome_gift .first_span{
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.active_bonuses .first_span{
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.active_bonuses{
+    margin-top: 3rem;
+}
+
+.input-field {
+    padding: 10px;
+    margin: 10px;
+    margin-left: 0px !important;
+    font-size: 16px;
+    width: 100%;
+    max-width: 300px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.apply-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+.apply-button:hover {
+    background-color: #0056b3;
+}
+.promo_wrapper h2{
+    margin-bottom: 0px !important;
+}
+
+.bonus_card {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bonus_card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.bonus_status {
+    background-color: #4CAF50;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    align-self: flex-start;
+}
+
+.bonus_info {
+    margin-top: 15px;
+}
+
+.bonus_name2 {
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 10px;
+}
+
+.bonus_name {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+
+
+.bonus_type {
+    font-size: 14px;
+    color: #777;
+}
+
+.bonus_type2{
+    font-size: 14px;
+    color: #fff;
+}
+
+.bonus_key {
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.blurred_key {
+    font-family: monospace;
+    color: #555;
+    padding: 5px;
+    background-color: #f1f1f1;
+    border-radius: 4px;
+    width: 180px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.reveal_key {
+    margin-left: 15px;
+    background-color: #007BFF;
+    color: white;
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.reveal_key:hover {
+    background-color: #0056b3;
+}
+
+.bonus_expiry {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #888;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.bonus_expiry span {
+    font-weight: bold;
+    color: #333;
+}
+

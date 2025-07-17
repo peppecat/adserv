@@ -1,0 +1,122 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    display: flex;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #333;
+}
+
+.promo-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.input-field {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.create-button {
+    background: #28a745;
+    color: white;
+    padding: 10px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.create-button:hover {
+    background: #218838;
+}
+
+.promo-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.promo-table th, .promo-table td {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+.promo-table th {
+    background-color: #007bff;
+    color: white;
+}
+
+.status.used {
+    color: red;
+    font-weight: bold;
+}
+
+.status.not-used {
+    color: green;
+    font-weight: bold;
+}
+
+.delete-button {
+    background: #dc3545;
+    color: white;
+    padding: 5px 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.delete-button:hover {
+    background: #c82333;
+}
+.sidebar {
+    width: 200px;
+    height: 100vh;
+    background-color: #007BFF;
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.sidebar a {
+    display: block;
+    color: white;
+    text-decoration: none;
+    padding: 15px;
+    width: 100%;
+    text-align: center;
+}
+.sidebar a:hover {
+    background-color: #0056b3;
+}
+.content {
+    flex-grow: 1;
+    padding: 20px;
+}
+.sidebar span {
+    text-decoration: overline;
+    font-weight: 600;
+    font-size: 20px;
+}

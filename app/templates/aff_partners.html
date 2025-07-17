@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            display: flex;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .sidebar {
+            width: 200px;
+            height: 100vh;
+            background-color: #007BFF;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            width: 100%;
+            text-align: center;
+        }
+        .sidebar a:hover {
+            background-color: #0056b3;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        select, input[type="number"], button {
+            padding: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .logout {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+        .logout:hover {
+            text-decoration: underline;
+        }
+        .sidebar span{
+            text-decoration: overline;
+            font-weight: 600;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="/admin/users">Пользователи</a>
+        <a href="/admin/orders">Заказы</a>
+        <a href="/admin/whitelist">Whitelist</a>
+        <a href="/admin/payments">Платежи</a>
+        <a href="/admin/rewards">Создание бандлов</a>
+        <a href="/admin/promo">Промокоды</a>
+        <span>Affilate Panel</span>
+        <a href="/aff/users">Пользователи</a>
+        <a href="/aff/finance">Финансы</a>
+        <a href="/aff/newpartners">Запросы (Join US)</a>
+        <a href="/aff/ref">Реф-код</a>
+        <a href="/">Выйти</a>
+    </div>
+    <div class="content">
+        <h1>Админ-панель</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>CODE</th>
+                    <th>Geographic Region</th>
+                    <th>Action</th> <!-- Новый столбец для кнопки Удалить -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for partner in partners %}
+                    <tr>
+                        <td>{{ partner.email }}</td>
+                        <td>{{ partner.traffic_source }}</td>
+                        <td>{{ partner.geo }}</td>
+                        <td>
+                            <!-- Кнопка удаления -->
+                            <form action="{{ url_for('delete_partner', email=partner.email) }}" method="POST">
+                                <button type="submit">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+
+</body>
+</html>

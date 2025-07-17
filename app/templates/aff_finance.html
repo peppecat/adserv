@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #007BFF;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            width: 100%;
+            text-align: center;
+        }
+        .sidebar a:hover {
+            background-color: #0056b3;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        select, input[type="number"], button {
+            padding: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .logout {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+        .logout:hover {
+            text-decoration: underline;
+        }
+        .sidebar span{
+            text-decoration: overline;
+            font-weight: 600;
+            font-size: 20px;
+        }
+        .id-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 400px;
+            margin-bottom: 20px;
+        }
+        .id-container h2 {
+            margin-bottom: 15px;
+        }
+        .id-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .id-container button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .id-container button:hover {
+            background: #0056b3;
+        }
+        
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+        th {
+            background: #007bff;
+            color: #fff;
+        }
+        .form-container {
+        background: #fff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .form-container h2 {
+        margin-bottom: 15px;
+    }
+    .form-container input, .form-container select {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .form-container button {
+        width: 100%;
+        padding: 10px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    .form-container button:hover {
+        background: #0056b3;
+    }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="/admin/users">Пользователи</a>
+        <a href="/admin/orders">Заказы</a>
+        <a href="/admin/whitelist">Whitelist</a>
+        <a href="/admin/payments">Платежи</a>
+        <a href="/admin/rewards">Создание бандлов</a>
+        <a href="/admin/promo">Промокоды</a>
+        <span>Affilate Panel</span>
+        <a href="/aff/users">Пользователи</a>
+        <a href="/aff/finance">Финансы</a>
+        <a href="/aff/newpartners">Запросы (Join US)</a>
+        <a href="/aff/ref">Реф-код</a>
+        <a href="/">Выйти</a>
+    </div>
+
+    <div class="content">
+        <h1>Админ-панель</h1>
+        
+        <!-- Форма для добавления платежа -->
+        <form class="form-container" method="POST">
+            <label for="aff_usersID">Пользователь (ID)</label>
+            <select name="aff_usersID" id="aff_usersID">
+                <option value="">Выберите ID</option>
+                {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.id }}</option>
+                {% endfor %}
+            </select>
+        
+            <label for="date">Дата</label>
+            <input type="date" name="date">
+        
+            <label for="amount">Сумма</label>
+            <input type="number" name="amount">
+        
+            <label for="method">Метод</label>
+            <select name="method">
+                <option value="Cryptocurrency (BEP20)">Cryptocurrency (BEP20)</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Bank Transfer">Bank Transfer</option>
+            </select>
+        
+            <label for="status">Статус</label>
+            <select name="status">
+                <option value="✅ Successfully Paid">✅ Successfully Paid</option>
+                <option value="⏳ Pending">⏳ Pending</option>
+            </select>
+        
+            <button type="submit">Добавить</button>
+        </form>        
+        
+        <!-- Таблица платежей с возможностью редактирования -->
+        <h2>Список платежей</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Пользователь (ID)</th>
+                    <th>Дата</th>
+                    <th>Сумма</th>
+                    <th>Метод</th>
+                    <th>Статус</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for payment in payments %}
+                    <tr>
+                        <td>{{ payment.user_id }}</td>
+                        <td>{{ payment.date }}</td>
+                        <td>{{ payment.amount }}</td>
+                        <td>{{ payment.method }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('update_payment_status') }}">
+                                <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                <select name="new_status">
+                                    <option value="✅ Successfully Paid" {% if payment.status == '✅ Successfully Paid' %}selected{% endif %}>✅ Successfully Paid</option>
+                                    <option value="⏳ Pending" {% if payment.status == '⏳ Pending' %}selected{% endif %}>⏳ Pending</option>
+                                </select>
+                                <button type="submit">Сохранить</button>
+                            </form>
+                        </td>
+                        <td>
+                            <!-- Кнопка удаления -->
+                            <form method="POST" action="{{ url_for('delete_payment') }}" onsubmit="return confirm('Удалить этот платеж?');">
+                                <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                <button type="submit" class="delete-btn">Удалить</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Добавим кнопку для удаления платежей без ID -->
+        <h3>Удалить платежи без ID</h3>
+        <form method="POST" action="{{ url_for('delete_payments_without_id') }}">
+            <button type="submit">Удалить платежи без ID</button>
+        </form>
+        
+
+    </div>
+    
+    
+</body>
+</html>

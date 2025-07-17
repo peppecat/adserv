@@ -1,0 +1,963 @@
+
+.counter input {
+    width: 30px;
+    border: none;
+    text-align: center;
+    font-size: 14px;
+    outline: none;
+}
+.thead-light tr th{
+    text-align: center;
+    padding: 8px 20px;
+}
+.table tr td{
+    text-align: center;
+}
+:root {
+    --ts-pr-clear-button: 0;
+    --ts-pr-caret: 0;
+    --ts-pr-min: .75rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+    :root {
+        scroll-behavior: smooth;
+    }
+}
+:root, [data-theme=light] {
+    --prefix: --bs-;
+    --bs-indigo: #6610f2;
+    --bs-purple: #6f42c1;
+    --bs-pink: #d63384;
+    --bs-red: #d82c5b;
+    --bs-orange: #fd7e14;
+    --bs-yellow: #ebcf4f;
+    --bs-green: #31cf80;
+    --bs-teal: #20c997;
+    --bs-cyan: #2dadcf;
+    --bs-gray: #989ea6;
+    --bs-gray-dark: #343a40;
+    --bs-primary: #00bac7;
+    --bs-secondary: #9ea9b4;
+    --bs-success: #31cf80;
+    --bs-info: #2dadcf;
+    --bs-warning: #ebcf4f;
+    --bs-danger: #d82c5b;
+    --bs-light: #f6f7f8;
+    --bs-dark: #0e2238;
+    --bs-light-green: #f1f5f7;
+    --bs-white: #fff;
+    --bs-black: #000;
+    --bs-blue: #0075c7;
+    --bs-gray-100: #f6f7f8;
+    --bs-gray-200: #f4f4f4;
+    --bs-gray-300: #edeef0;
+    --bs-gray-400: #d6dae2;
+    --bs-gray-500: #a5abb3;
+    --bs-gray-600: #989ea6;
+    --bs-gray-700: #707070;
+    --bs-gray-800: #343a40;
+    --bs-gray-900: #212529;
+    --bs-primary-rgb: 0, 186, 199;
+    --bs-secondary-rgb: 158, 169, 180;
+    --bs-success-rgb: 49, 207, 128;
+    --bs-info-rgb: 45, 173, 207;
+    --bs-warning-rgb: 235, 207, 79;
+    --bs-danger-rgb: 216, 44, 91;
+    --bs-light-rgb: 246, 247, 248;
+    --bs-dark-rgb: 14, 34, 56;
+    --bs-light-green-rgb: 241, 245, 247;
+    --bs-blue-rgb: 0, 117, 199;
+    --bs-gray-100-rgb: 246, 247, 248;
+    --bs-gray-200-rgb: 244, 244, 244;
+    --bs-gray-300-rgb: 237, 238, 240;
+    --bs-gray-400-rgb: 214, 218, 226;
+    --bs-gray-500-rgb: 165, 171, 179;
+    --bs-gray-600-rgb: 152, 158, 166;
+    --bs-gray-700-rgb: 112, 112, 112;
+Show All Properties (38 more)
+}
+:root {
+    --fc-daygrid-event-dot-width: 8px;
+}
+:root {
+    --fc-list-event-dot-width: 10px;
+    --fc-list-event-hover-bg-color: #f5f5f5;
+}
+:root {
+    --ts-pr-clear-button: 0;
+    --ts-pr-caret: 0;
+    --ts-pr-min: .75rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+    :root {
+        scroll-behavior: smooth;
+    }
+}
+:root, [data-theme=light] {
+    --prefix: --bs-;
+    --bs-indigo: #6610f2;
+    --bs-purple: #6f42c1;
+    --bs-pink: #d63384;
+    --bs-red: #d82c5b;
+    --bs-orange: #fd7e14;
+    --bs-yellow: #ebcf4f;
+    --bs-green: #31cf80;
+    --bs-teal: #20c997;
+    --bs-cyan: #2dadcf;
+    --bs-gray: #989ea6;
+    --bs-gray-dark: #343a40;
+    --bs-primary: #00bac7;
+    --bs-secondary: #9ea9b4;
+    --bs-success: #31cf80;
+    --bs-info: #2dadcf;
+    --bs-warning: #ebcf4f;
+    --bs-danger: #d82c5b;
+    --bs-light: #f6f7f8;
+    --bs-dark: #0e2238;
+    --bs-light-green: #f1f5f7;
+    --bs-white: #fff;
+    --bs-black: #000;
+    --bs-blue: #0075c7;
+    --bs-gray-100: #f6f7f8;
+    --bs-gray-200: #f4f4f4;
+    --bs-gray-300: #edeef0;
+    --bs-gray-400: #d6dae2;
+    --bs-gray-500: #a5abb3;
+    --bs-gray-600: #989ea6;
+    --bs-gray-700: #707070;
+    --bs-gray-800: #343a40;
+    --bs-gray-900: #212529;
+    --bs-primary-rgb: 0, 186, 199;
+    --bs-secondary-rgb: 158, 169, 180;
+    --bs-success-rgb: 49, 207, 128;
+    --bs-info-rgb: 45, 173, 207;
+    --bs-warning-rgb: 235, 207, 79;
+    --bs-danger-rgb: 216, 44, 91;
+    --bs-light-rgb: 246, 247, 248;
+    --bs-dark-rgb: 14, 34, 56;
+    --bs-light-green-rgb: 241, 245, 247;
+    --bs-blue-rgb: 0, 117, 199;
+    --bs-gray-100-rgb: 246, 247, 248;
+    --bs-gray-200-rgb: 244, 244, 244;
+    --bs-gray-300-rgb: 237, 238, 240;
+    --bs-gray-400-rgb: 214, 218, 226;
+    --bs-gray-500-rgb: 165, 171, 179;
+    --bs-gray-600-rgb: 152, 158, 166;
+    --bs-gray-700-rgb: 112, 112, 112;
+Show All Properties (38 more)
+}
+:root {
+    --fc-daygrid-event-dot-width: 8px;
+}
+:root {
+    --fc-list-event-dot-width: 10px;
+    --fc-list-event-hover-bg-color: #f5f5f5;
+}
+:root {
+    --blue: #007bff;
+    --indigo: #6610f2;
+    --purple: #6f42c1;
+    --pink: #e83e8c;
+    --red: #dc3545;
+    --orange: #fd7e14;
+    --yellow: #ffc107;
+    --green: #28a745;
+    --teal: #20c997;
+    --cyan: #17a2b8;
+    --white: #fff;
+    --gray: #6c757d;
+    --gray-dark: #343a40;
+    --primary: #007bff;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --breakpoint-xs: 0;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+    --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+    --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+:root {
+    --blue: #007bff;
+    --indigo: #6610f2;
+    --purple: #6f42c1;
+    --pink: #e83e8c;
+    --red: #dc3545;
+    --orange: #fd7e14;
+    --yellow: #ffc107;
+    --green: #28a745;
+    --teal: #20c997;
+    --cyan: #17a2b8;
+    --white: #fff;
+    --gray: #6c757d;
+    --gray-dark: #343a40;
+    --primary: #007bff;
+    --secondary: #6c757d;
+    --success: #28a745;
+    --info: #17a2b8;
+    --warning: #ffc107;
+    --danger: #dc3545;
+    --light: #f8f9fa;
+    --dark: #343a40;
+    --breakpoint-xs: 0;
+    --breakpoint-sm: 576px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 992px;
+    --breakpoint-xl: 1200px;
+    --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+body{
+    margin: 0;
+}
+html {
+    min-height: 100%;
+    position: relative;
+}
+html {
+    min-height: 100%;
+    position: relative;
+}
+html {
+    font-family: sans-serif;
+    line-height: 1.15;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    -ms-overflow-style: scrollbar;
+    -webkit-tap-highlight-color: transparent;
+}
+html {
+    font-family: sans-serif;
+    line-height: 1.15;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    -ms-overflow-style: scrollbar;
+    -webkit-tap-highlight-color: transparent;
+}
+*, :after, :before {
+    box-sizing: border-box;
+}
+*, :after, :before {
+    box-sizing: border-box;
+}
+*, ::after, ::before {
+    box-sizing: border-box;
+}
+*, ::after, ::before {
+    box-sizing: border-box;
+}
+html[Attributes Style] {
+    -webkit-locale: "en";
+}
+user agent stylesheet
+:root {
+    view-transition-name: root;
+}
+user agent stylesheet
+html {
+    display: block;
+}
+*, :after, :before {
+    box-sizing: border-box;
+}
+*, :after, :before {
+    box-sizing: border-box;
+}
+*, ::after, ::before {
+    box-sizing: border-box;
+}
+*, ::after, ::before {
+    box-sizing: border-box;
+}
+*, :after, :before {
+    box-sizing: border-box;
+}
+*, :after, :before {
+    box-sizing: border-box;
+}
+*, ::after, ::before {
+    box-sizing: border-box;
+}
+*, ::after, ::before {
+    box-sizing: border-box;
+}
+::selection {
+    background-color: rgba(0, 186, 199, .75);
+    color: #fff;
+}
+::selection {
+    background-color: rgba(0, 186, 199, .75);
+    color: #fff;
+}
+
+hr{
+    margin-bottom: 6rem;
+}
+.wallets-block{
+    display: flex;
+    position: relative;
+    justify-content: space-between;
+}
+.grid-cont {
+    display: grid;
+    position: relative;
+}
+.wallet-cont {
+    background-color: #f4f4f4;
+    -webkit-box-shadow: 0 0 7px 2px rgba(0, 0, 0, .13);
+    box-shadow: 0 0 7px 2px rgba(0, 0, 0, .13);
+    border-radius: 5px;
+    color: #000;
+    font-size: 12px;
+    max-width: 333px;
+    min-width: 333px;
+    padding: 10px 12px 12px;
+    text-align: left;
+
+}
+.wallet-name{
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+}
+.wallet-name>img {
+    height: 13px;
+    margin-right: 5px;
+    width: auto;
+    border: 0;
+}
+.inflex-cont {
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    font-size: 22px;
+    margin: 12px 0 21px;
+}
+.wallet-balance-sum>span {
+    margin-right: 5px;
+}
+.wallet-balance-converted{
+    grid-template-columns: repeat(2, 1fr);
+    -webkit-column-gap: 20px;
+    -moz-column-gap: 20px;
+    column-gap: 20px;
+    -webkit-box-pack: justify;
+    -ms-flex-pack: justify;
+    justify-content: space-between;
+}
+.wallet-balance-usd{
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+    flex-direction: column;
+    display: inline-flex;
+}
+.wallet-balance-converted .small-txt {
+    font-size: 9px;
+}
+.row-mb{
+    margin-bottom: 30px;
+}
+.inflex-cont-1 {
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    font-size: 22px;
+}
+.total-expenses{
+    margin-right: 5px;
+}
+.wallet-cont-1{
+    margin-bottom: 10px;
+}
+.account-content-1{
+    margin-right: 10px;
+}
+.topup-balance{
+    display: flex;
+    align-items: center;
+}
+.topup-balance h1{
+    margin-right: 1.471875rem;
+}
+.topup-balance .addFunds {
+    margin-bottom: 1.471875rem;
+    padding: 6px;
+    border-radius: 7px;
+    border: none;
+    background-color: rgba(128, 128, 128, 0.219);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.topup-balance .wdFunds {
+    margin-bottom: 1.471875rem;
+    padding: 6px;
+    border-radius: 7px;
+    border: none;
+    background-color: rgba(128, 128, 128, 0.219);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.topup-balance .addFunds:hover {
+    background-color: #00bac7;
+    color: #fff;
+    border: none;
+}
+main{
+    height: auto !important;
+}
+.wallet-cont-1flex{
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+.wallet-cont-1 {
+    flex: 1;
+    margin-right: 10px; /* Опционально, для отступа между блоками */
+}
+
+.wallet-cont-1:last-child {
+    margin-right: 0; /* Убираем отступ у последнего блока */
+}
+.wallet-cont-mw{
+    max-width: none;
+}
+.ref-code{
+    margin-left: 15px;
+}
+#overlay-1 {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+#popup-1 {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    z-index: 1001;
+    min-width: 300px;
+}
+#overlay-2 {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+#popup-2 {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    z-index: 1001;
+    min-width: 300px;
+}
+#overlay-3 {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+}
+#popup-3 {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    z-index: 1001;
+    min-width: 300px;
+}
+
+.form-netSelector{
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+.form-refilTitle span{
+    font-weight: 600;
+    font-size: 23px;
+}
+.choose-crypto select{
+    padding: 5px;
+    outline: none;
+}
+.choose-crypto .amount{
+    margin-bottom: 10px;
+}
+.choose-crypto .amount input{
+    width: 100%;
+    padding: 5px;
+    outline: none;
+}
+.choose-crypto button{
+    border: none;
+    padding: 6px;
+    border-radius: 7px;
+    background-color: rgba(128, 128, 128, 0.219);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    width: 100%;
+}
+.choose-crypto button:hover{
+    background-color: #00bac7;
+    color: #fff;
+}
+.crypto-pay-adress{
+    background-color: #f7f7f7;
+    min-height: 100vh;
+}
+.main-block-1{
+    
+    border-radius: 5px;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    margin: 0 auto;
+}
+.main-block-1 .main-block-content{
+    -webkit-box-flex: 1;
+    -ms-flex-positive: 1;
+    flex-grow: 1;
+    min-height: 450px;
+    width: 100%;
+}
+.main-block-1 .main-block-content .process-page{
+    padding: 45px 40px;
+}
+.crypto-adressTitle{
+    font-size: 32px;
+    font-weight: 700;
+    color: #201b16;
+    margin: 0 0 14px;
+    text-align: center;
+}
+.crypto-form-fs{
+    font-size: 14px;
+    gap: 13px 31px;
+    display: grid;
+    justify-content: center;
+    margin-top: 48px;
+}
+.crypto-payment-info-cont{
+    padding: 23px 30px 33px;
+    text-align: center;
+    background-color: #fff;
+    box-shadow: 0 0 7px 0 rgba(0, 0, 0, .13);
+    border-radius: 10px;
+    font-size: 14px;
+}
+.crypto-pay-currency{
+    gap: 8px;
+    line-height: 1;
+    text-align: left;
+    align-items: center;
+    display: flex;
+    margin-bottom: 35px;
+}
+.crypto-pay-currency img {
+    height: 48px;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+    width: auto;
+}
+.flex-cont-2{
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    color: #686868;
+}
+.flex-cont-2 span{
+    font-size: 32px;
+    margin-top: 2px;
+    color: #00001a;
+    font-weight: 600;
+}
+.crypto-form-cont{
+    font-size: 14px;
+    max-width: 430px;
+    margin: auto;
+    text-align: left;
+    margin-bottom: 15px;
+}
+.crypto-form-cont .crypto-form-cont-label{
+    font-size: 14px;
+    color: #686868;
+}
+.rounded-grey-rect img {
+    height: 20px;
+    width: auto;
+}
+.rounded-grey-rect{
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    background-color: #f6f6f6;
+    border-radius: 16px;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    font-size: 20px;
+    gap: 14px;
+    min-height: 49px;
+    margin-top: 6px;
+    padding: 5px 12px 5px 7px;
+    color: #00001a;
+}
+.crypto-form-cont .btn-copy {
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    color: #00001a;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -ms-flex-negative: 0;
+    flex-shrink: 0;
+    height: 23px;
+    margin-left: auto;
+    width: 23px;
+}
+.adress-to-copy{
+    word-break: break-all;
+}
+.crypto-network-2{
+    border: 1px solid #fe582d;
+    color: #fe582d;
+}
+.crypto-status-cont{
+    margin-top: 30px;
+    text-align: center;
+    font-size: 14px;
+    color: #686868;
+}
+.time-circle-wrap{
+    margin: 13px 20px;
+}
+.time-circle-wrap .hours-text{
+    font-size: 19.25px;
+    color: #00001a;
+}
+.crypto-status-cont .black-text{
+    color: #00001a;
+}
+.crypto-buttons-cont{
+    margin-top: 30px;
+}
+.crypto-buttons-cont .btn-red {
+    max-width: 340px;
+    width: 100%;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #db3f1e;
+    background-image: linear-gradient(-167deg, #db3f1e, #f17d13);
+    border: 0;
+    border-radius: 50px;
+    -webkit-box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    color: #fff;
+    cursor: pointer;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    height: 48px;
+    line-height: 1;
+    min-width: 103px;
+    outline: 0;
+    padding: 0 15px;
+    text-align: center;
+    -webkit-transition: all .3s linear;
+    -o-transition: all .3s linear;
+    transition: all .6s linear;
+}
+.crypto-buttons-cont .btn-red:hover{
+    background-image: linear-gradient(-167deg, #ec4220, #e26e01);
+}
+.crypto-buttons-cont .btn-red-1 {
+    max-width: 340px;
+    width: 100%;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #db3f1e;
+    background-image: linear-gradient(-167deg, #db3f1e, #f17d13);
+    border: 0;
+    border-radius: 50px;
+    -webkit-box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    color: #fff;
+    cursor: pointer;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    height: 48px;
+    line-height: 1;
+    min-width: 103px;
+    outline: 0;
+    padding: 0 15px;
+    text-align: center;
+    -webkit-transition: all .3s linear;
+    -o-transition: all .3s linear;
+    transition: all .6s linear;
+}
+.crypto-buttons-cont .btn-red-1:hover{
+    background-image: linear-gradient(-167deg, #ec4220, #e26e01);
+}
+.crypto-buttons-cont .btn-red-2 {
+    max-width: 340px;
+    width: 100%;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #db3f1e;
+    background-image: linear-gradient(-167deg, #db3f1e, #f17d13);
+    border: 0;
+    border-radius: 50px;
+    -webkit-box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    color: #fff;
+    cursor: pointer;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    height: 48px;
+    line-height: 1;
+    min-width: 103px;
+    outline: 0;
+    padding: 0 15px;
+    text-align: center;
+    -webkit-transition: all .3s linear;
+    -o-transition: all .3s linear;
+    transition: all .6s linear;
+}
+.crypto-buttons-cont .btn-red-2:hover{
+    background-image: linear-gradient(-167deg, #ec4220, #e26e01);
+}
+.crypto-buttons-cont .btn-red-3 {
+    max-width: 340px;
+    width: 100%;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #db3f1e;
+    background-image: linear-gradient(-167deg, #db3f1e, #f17d13);
+    border: 0;
+    border-radius: 50px;
+    -webkit-box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    color: #fff;
+    cursor: pointer;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    height: 48px;
+    line-height: 1;
+    min-width: 103px;
+    outline: 0;
+    padding: 0 15px;
+    text-align: center;
+    -webkit-transition: all .3s linear;
+    -o-transition: all .3s linear;
+    transition: all .6s linear;
+}
+.crypto-buttons-cont .btn-red-3:hover{
+    background-image: linear-gradient(-167deg, #ec4220, #e26e01);
+}
+.crypto-buttons-cont .btn-red-4 {
+    max-width: 340px;
+    width: 100%;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #db3f1e;
+    background-image: linear-gradient(-167deg, #db3f1e, #f17d13);
+    border: 0;
+    border-radius: 50px;
+    -webkit-box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    color: #fff;
+    cursor: pointer;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    height: 48px;
+    line-height: 1;
+    min-width: 103px;
+    outline: 0;
+    padding: 0 15px;
+    text-align: center;
+    -webkit-transition: all .3s linear;
+    -o-transition: all .3s linear;
+    transition: all .6s linear;
+}
+.crypto-buttons-cont .btn-red-4:hover{
+    background-image: linear-gradient(-167deg, #ec4220, #e26e01);
+}
+.crypto-buttons-cont .btn-red-5 {
+    max-width: 340px;
+    width: 100%;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    background-color: #db3f1e;
+    background-image: linear-gradient(-167deg, #db3f1e, #f17d13);
+    border: 0;
+    border-radius: 50px;
+    -webkit-box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    box-shadow: 0 0 0 8px rgba(222, 71, 23, .2);
+    color: #fff;
+    cursor: pointer;
+    display: -webkit-inline-box;
+    display: -ms-inline-flexbox;
+    display: inline-flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    height: 48px;
+    line-height: 1;
+    min-width: 103px;
+    outline: 0;
+    padding: 0 15px;
+    text-align: center;
+    -webkit-transition: all .3s linear;
+    -o-transition: all .3s linear;
+    transition: all .6s linear;
+}
+.crypto-buttons-cont .btn-red-5:hover{
+    background-image: linear-gradient(-167deg, #ec4220, #e26e01);
+}
+.order-hs{
+    margin-top: 5.5rem;
+}
+.page-title-1 span{
+    font-weight: 600;
+    font-size: 1.725rem;
+}
+.home-cont-profile{
+    margin-top: 5.5rem;
+}
+.order-hs .table-responsive{
+    border-top-right-radius: 0.625rem;
+    border-top-left-radius: 0.625rem;
+}
+
+.payment-status-info{
+    text-align: center;
+    margin-bottom: 30px;
+}
+.payment-status-info span{
+    padding: 10px 10px;
+    border-radius: 10px;
+    background-color: #20c95391;
+}
+.btn:disabled{
+    min-width: 100px;
+}
+.btn-outline-success {
+    min-width: 100px;
+}
+.wdFunds-done{
+    display: flex;
+    flex-direction: column;
+    padding: 5px;
+    text-align: center;
+    background-color: #87ffa3;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+.wdFunds-doneTimer{
+    text-align: center;
+}
+.reveal-key{
+    padding: 5px;
+    border-radius: 10px;
+    background-color: hsl(205deg 100% 75.81% / 64%);
+    border: none;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #00bfff;
+}
+
+/* Мобильная версия */
+@media (max-width: 768px) {
+    .logo {
+        font-size: 20px;  /* Уменьшаем размер шрифта */
+        color: #00bfff;   /* Можно изменить цвет для мобильных устройств */
+    }
+}
+
+/* Еще более маленькие экраны, например, для телефонов */
+@media (max-width: 480px) {
+    .logo {
+        font-size: 18px;  /* Еще больше уменьшаем размер */
+        color: #00bfff;   /* Другой цвет */
+    }
+}

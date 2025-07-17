@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Us - Partner Program</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+
+        .partnership-options {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .option {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            background-color: #007BFF;
+            color: white;
+            margin: 0 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .option:hover {
+            background-color: #0056b3;
+        }
+
+        .description-container {
+            margin-top: 20px;
+        }
+
+        .description-header {
+            font-size: 1.2em;
+            cursor: pointer;
+            color: #007BFF;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .description-header:hover {
+            background-color: #ddd;
+        }
+
+        .description-content {
+            display: none;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .option.selected {
+            background-color: #000000;
+            color: white;
+        }
+
+        .option.selected:hover {
+            background-color: #000000;
+        }
+
+        .condition-list {
+            margin-top: 15px;
+            padding-left: 20px;
+        }
+
+        .condition-item {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .contact-form {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f1f1f1;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .contact-form input,
+        .contact-form button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .contact-form button {
+            background-color: #007BFF;
+            color: white;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .contact-form button:hover {
+            background-color: #0056b3;
+        }
+
+        .back-button {
+            width: auto;
+            margin: 30px auto 0;
+            padding: 10px 20px;
+            background-color: #272727;
+            color: white;
+            font-size: 1em;
+            border-radius: 5px;
+            cursor: pointer;
+            display: block;
+            text-align: center;
+        }
+
+        .back-button:hover {
+            background-color: #888;
+        }
+        .flash-message {
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            color: white;
+            background-color: #28a745; /* Зеленый цвет */
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Partner with Us</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Partnership selection block -->
+    <div class="partnership-options">
+        <div class="option selected" id="cpa" onclick="showDescription('cpa')">CPA</div>
+        <div class="option" id="rev-share" onclick="showDescription('rev-share')">Rev Share</div>
+        <div class="option" id="agent" onclick="showDescription('agent')">Agent</div>
+    </div>
+
+    <!-- Description block -->
+    <div class="description-container">
+        <!-- CPA Description -->
+        <div id="cpa-description" class="description">
+            <div class="description-header" onclick="toggleDescription('cpa')">CPA (Cost per Action)</div>
+            <div id="cpa-content" class="description-content">
+                <p>CPA model - payment for each action taken by a user. Terms:</p>
+                <ul class="condition-list">
+                    <li class="condition-item"><strong>$1</strong> for each registration brought by you.</li>
+                    <li class="condition-item"><strong>$15</strong> for a deposit of $75 or more.</li>
+                    <li class="condition-item">For every 50 participants brought in, there must be at least one deposit of $75 or more.</li>
+                    <li class="condition-item">Payment is made once all conditions are met, without delays.</li>
+                    <li class="condition-item">Partners with high activity levels may qualify for additional bonuses and awards.</li>
+                </ul>
+
+                <!-- Deposit levels and payments -->
+                <p>Deposit levels and corresponding payments:</p>
+                <ul class="condition-list">
+                    <li class="condition-item"><strong>Deposit from $75:</strong> $15 per deposit.</li>
+                    <li class="condition-item"><strong>Deposit from $200:</strong> $40 per deposit + additional bonus for bringing 30 new users.</li>
+                    <li class="condition-item"><strong>Deposit from $500:</strong> $100 per deposit + bonus for bringing 50 new users.</li>
+                    <li class="condition-item"><strong>Deposit from $1000:</strong> $250 per deposit + bonus for bringing 100 new users.</li>
+                </ul>
+
+                <p>For each deposit level, you need to bring a certain number of new users. Example:</p>
+                <ul class="condition-list">
+                    <li class="condition-item">For a deposit of $200, you need to bring 30 new users.</li>
+                    <li class="condition-item">For a deposit of $500, you need to bring 50 new users.</li>
+                    <li class="condition-item">For a deposit of $1000, you need to bring 100 new users.</li>
+                </ul>
+
+                <p>This model is perfect for those who actively attract users and can ensure a steady flow of new registrations and deposits. As the deposit increases, so do the bonuses!</p>
+            </div>
+        </div>
+
+        <!-- Rev Share Description -->
+        <div id="rev-share-description" class="description">
+            <div class="description-header" onclick="toggleDescription('rev-share')">Rev Share (Revenue Share)</div>
+            <div id="rev-share-content" class="description-content">
+                <p>The Rev Share model is based on earning a percentage of the revenue generated by users you brought to the platform. A user is defined as someone who has made a deposit of $75 or more. The more active users you have, the higher your income. Terms:</p>
+                <ul class="condition-list">
+                    <li class="condition-item"><strong>5%</strong> of all deposits from the users you brought.</li>
+                    <li class="condition-item"><strong>6.89%</strong> of all deposits from the users you brought and who remain active for more than 30 days.</li>
+                    <li class="condition-item">Additional bonuses for bringing a certain number of new users:</li>
+                    <ul>
+                        <li class="condition-item"><strong>100 new users:</strong> $83 bonus.</li>
+                        <li class="condition-item"><strong>500 new users:</strong> $250 bonus.</li>
+                        <li class="condition-item"><strong>1000 new users:</strong> $500 bonus.</li>
+                    </ul>
+                </ul>
+
+                <p>This model allows you to earn from the long-term activity of the users you attracted, as well as receive bonuses for high performance in attracting and retaining users. Partners who can attract a significant number of users will receive substantial bonuses.</p>
+            </div>
+        </div>
+
+        <!-- Agent Description -->
+        <div id="agent-description" class="description">
+            <div class="description-header" onclick="toggleDescription('agent')">Agent</div>
+            <div id="agent-content" class="description-content">
+                <p>The Agent model is designed for those who invite new partners and earn a percentage of their partners' income. Agents receive commissions based on the total earnings of the partners they bring in.</p>
+                <ul class="condition-list">
+                    <li class="condition-item"><strong>10%</strong> of the earnings from partners' closed deals.</li>
+                    <li class="condition-item"><strong>15%</strong> if you have invited more than 50 active partners.</li>
+                    <li class="condition-item"><strong>20%</strong> if you have invited more than 100 active partners.</li>
+                    <li class="condition-item">Additional bonuses for attracting high-earning partners and working with top-tier affiliates.</li>
+                </ul>
+
+                <p>Agents also get access to exclusive offers and additional rewards for outstanding results in attracting and supporting partners. This model is ideal for those who want to build a long-term, scalable income by developing their own network of successful partners.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <a href="javascript:history.back()" class="back-button">Back</a>
+
+    <!-- Contact form -->
+    <div class="contact-form">
+        <h3>Contact Us</h3>
+        <p>Please provide your contact details so we can get in touch with you.</p>
+        <form method="post">
+            <input type="email" name="email" placeholder="Enter your email" required>
+            <input type="text" name="traffic-source" placeholder="CODE (optional)">
+            <input type="text" name="geo" placeholder="Which geographic region (geo) will you target?" required>
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    function showDescription(partnershipType) {
+        // Remove highlight from all options
+        document.querySelectorAll('.option').forEach(function(option) {
+            option.classList.remove('selected');
+        });
+
+        // Highlight selected option
+        document.getElementById(partnershipType).classList.add('selected');
+
+        // Hide all descriptions
+        document.querySelectorAll('.description').forEach(function(description) {
+            description.style.display = 'none';
+        });
+
+        // Show selected description
+        document.getElementById(partnershipType + '-description').style.display = 'block';
+    }
+
+    function toggleDescription(partnershipType) {
+        const content = document.getElementById(partnershipType + '-content');
+        
+        if (content.style.display === 'none' || content.style.display === '') {
+            content.style.display = 'block';
+        } else {
+            content.style.display = 'none';
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,124 @@
+{
+    "payments": {
+        "bep20": "6456747567",
+        "erc20": "",
+        "trc20": "",
+        "sol": "",
+        "near": ""
+    },
+    "Dim4ikgoo$e101$": {
+        "password": "Dim4ikgoo$e101$",
+        "balance": {
+            "trc20": 0,
+            "erc20": 0,
+            "bep20": 51.46,
+            "card": 0,
+            "USD": 19817.08
+        },
+        "orders": 0.0,
+        "expenses": 1078.54,
+        "userorders": [
+            {
+                "id": "d0289b9f-5654-4246-be30-560973be91bd",
+                "category": "Steam",
+                "product": "Steam TopUp",
+                "price": 22.54,
+                "amount": 23.0,
+                "requested_amount": 23.0,
+                "paid_amount": 22.54,
+                "discount": 2,
+                "date": "2025-07-16 11:52:23",
+                "timestamp": 1752655943.622603,
+                "steamLogin": "vidrea",
+                "notification_sent": true,
+                "status": "complete"
+            },
+            {
+                "id": "cf1491ad-f361-470d-a359-4995bd18dab8",
+                "category": "Steam Wallet Code | USA",
+                "product": "Steam Wallet Code | US | 5 USD",
+                "price": 5.0,
+                "amount": 1,
+                "date": "2025-06-09 20:09:38",
+                "timestamp": 1749488978.167419,
+                "notification_sent": true,
+                "status": "complete",
+                "key": "\u043a\u0443\u043a\u0443\u0448\u043a\u0430"
+            }
+        ],
+        "topups": [
+            {
+                "date": "2025-05-02 16:53:01",
+                "network": "BEP20",
+                "amount": 4.0,
+                "status": "Pending"
+            },
+            {
+                "date": "2025-07-16 11:54:13",
+                "network": "BEP20",
+                "amount": 44.0,
+                "status": "Success"
+            }
+        ],
+        "transactions": [
+            {
+                "type": "refund",
+                "amount": 8000.0,
+                "currency": "USD",
+                "order_id": "4262067b-31c0-4edf-884b-f6210fe26953",
+                "date": "2025-04-30 16:14:51",
+                "description": "Refund for canceled order: Steam TopUp"
+            },
+            {
+                "type": "refund",
+                "amount": 20.32,
+                "currency": "USD",
+                "order_id": "72189b8c-5a64-4459-8891-035bb0783678",
+                "date": "2025-04-30 16:15:06",
+                "description": "Refund for canceled order: Steam CD-Key | Age of Wonders 4"
+            },
+            {
+                "type": "refund",
+                "amount": 1.72,
+                "currency": "USD",
+                "order_id": "9f6e2f78-c97d-4927-b5bd-8c2545171238",
+                "date": "2025-04-30 16:15:22",
+                "description": "Refund for canceled order: Apple Gift Card | USA | 2 USD"
+            },
+            {
+                "type": "refund",
+                "amount": 20.32,
+                "currency": "USD",
+                "order_id": "72189b8c-5a64-4459-8891-035bb0783678",
+                "date": "2025-04-30 16:16:04",
+                "description": "Refund for canceled order: Steam CD-Key | Age of Wonders 4"
+            }
+        ]
+    },
+    "12345": {
+        "password": "12345",
+        "balance": {
+            "trc20": 0,
+            "erc20": 0,
+            "bep20": 0,
+            "card": 0
+        },
+        "orders": 0,
+        "expenses": 0,
+        "userorders": [],
+        "topups": []
+    },
+    "user12": {
+        "password": "user12",
+        "balance": {
+            "trc20": 0,
+            "erc20": 0,
+            "bep20": 0,
+            "card": 0
+        },
+        "orders": 0,
+        "expenses": 0,
+        "userorders": [],
+        "topups": []
+    }
+}

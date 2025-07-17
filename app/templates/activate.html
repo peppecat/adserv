@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate Promo Code</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='promo.css') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+</head>
+<body>
+
+<div class="active_bonuses" id="active_bonuses">
+    <span class="first_span">✨Active Bonuses</span>
+    <div class="bonus_wrap">
+        <div class="bonus_card">
+            <div class="bonus_status">Активен</div>
+            <div class="bonus_info">
+                <h3 class="bonus_name">{{ bonus['title'] }}</h3>
+                <p class="bonus_type">Тип: <span>Ключ</span></p>
+                <div class="bonus_key">
+                    <span class="blurred_key">{{ bonus['key'][:4] }}****-****-{{ bonus['key'][-4:] }}</span>
+                    <button class="reveal_key">Получить</button>
+                </div>
+            </div>
+            <div class="bonus_expiry">Осталось: <span>12 часов</span></div>
+        </div>
+    </div>
+</div>
+
+<a href="{{ url_for('index') }}">Back to Home</a>
+
+</body>
+</html>

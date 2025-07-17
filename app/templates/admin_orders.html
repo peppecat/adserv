@@ -1,0 +1,254 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Редактировние заказов</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        select, input[type="number"], input[type="text"], input[type="date"], button {
+            padding: 5px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .logout {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #007BFF;
+            font-weight: bold;
+        }
+        .logout:hover {
+            text-decoration: underline;
+        }
+        .sidebar {
+            width: 200px;
+            background-color: #007BFF;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            width: 100%;
+            text-align: center;
+        }
+        .sidebar a:hover {
+            background-color: #0056b3;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .sidebar span {
+            text-decoration: overline;
+            font-weight: 600;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="/admin/users">Пользователи</a>
+        <a href="/admin/orders">Заказы</a>
+        <a href="/admin/whitelist">Whitelist</a>
+        <a href="/admin/payments">Платежи</a>
+        <a href="/admin/rewards">Награды</a>
+        <span>Affilate Panel</span>
+        <a href="/aff/users">Пользователи</a>
+        <a href="/aff/finance">Финансы</a>
+        <a href="/aff/newpartners">Запросы (Join US)</a>
+        <a href="/aff/ref">Реф-код</a>
+        <a href="/">Выйти</a>
+    </div>
+    <div class="content">
+        <h1>Редактирование заказов</h1>
+    
+        <form method="POST">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Пользователь</th>
+                        <th>Категория</th>
+                        <th>Товар</th>
+                        <th>Цена</th>
+                        <th>Количество</th>
+                        <th>Дата и время</th> <!-- Обновленная колонка -->
+                        <th>Удалить</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <select name="target_user">
+                                {% for user, info in users.items() %}
+                                    <option value="{{ user }}">{{ user }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="category">
+                                <option value="Apex Coins">Apex Coins</option>
+                                <option value="Apple Gift Card">Apple Gift Card</option>
+                                <option value="Blizzard Gift Card">Blizzard Gift Card</option>
+                                <option value="EA Gift Card">EA Gift Card</option>
+                                <option value="Google Play Gift Card">Google Play Gift Card</option>
+                                <option value="Netflix & Spotify">Netflix & Spotify</option>
+                                <option value="Nintendo Gift Card">Nintendo Gift Card</option>
+                                <option value="Playstation Gift Card">Playstation Gift Card</option>
+                                <option value="Pubg">Pubg</option>
+                                <option value="Roblox">Roblox</option>
+                                <option value="Razer Gold">Razer Gold</option>
+                                <option value="Steam">Steam</option>
+                                <option value="Valorant">Valorant</option>
+                                <option value="World of Warcraft">World of Warcraft</option>
+                                <option value="Xbox Gift Card">Xbox Gift Card</option>
+                                <option value="Xbox Subscriptions">Xbox Subscriptions</option>
+                                <option value="UPLAY">UPLAY</option>
+                            </select>
+                        </td>
+                        <td><input type="text" name="product" placeholder="Введите товар"></td>
+                        <td><input type="text" name="price" placeholder="Цена"></td>
+                        <td><input type="number" name="amount" placeholder="Количество"></td>
+                        <td><input type="datetime-local" name="date" placeholder="Дата и время"></td> <!-- Новое поле для выбора даты и времени -->
+                    </tr>
+                    <tr>
+                        <td colspan="7">
+                            <button type="submit">Сохранить данные</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </form>
+        
+    
+        <hr>
+    
+        <h2>Заказы пользователей</h2>
+        {% for user, info in users.items() %}
+        <div class="user-orders">
+            <h3>Заказы пользователя {{ user }}</h3>
+            {% if 'userorders' in info %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Категория</th>
+                            <th>Товар</th>
+                            <th>Цена</th>
+                            <th>Количество</th>
+                            <th>Дата</th>
+                            <th>Статус</th>
+                            <th>Ключ</th>
+                            <th>Удалить</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in info['userorders'] %}
+                            <tr>
+                                <td>{{ order.category }}</td>
+                                <td>{{ order.product }}</td>
+                                <td>{{ order.price }}</td>
+                                <td>{{ order.amount }}</td>
+                                <td>
+                                    <form action="{{ url_for('update_order_date', user=user, order_id=order.id) }}" method="POST">
+                                        <input type="datetime-local" 
+                                               name="new_date" 
+                                               step="1" 
+                                               value="{{ order.date|replace(' ', 'T') }}"
+                                               class="form-control">
+                                        <button type="submit">Сохранить</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <form action="{{ url_for('update_order_status', user=user, order_id=order.id) }}" method="POST">
+                                        <select name="status" class="form-select">
+                                            <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
+                                            <option value="complete" {% if order.status == 'complete' %}selected{% endif %}>Complete</option>
+                                            <option value="canceled" {% if order.status == 'canceled' %}selected{% endif %}>Canceled</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    {% if order.key %}
+                                        <span>{{ order.key }}</span>
+                                    {% else %}
+                                        <form action="{{ url_for('save_key', user=user, order_id=order.id) }}" method="POST">
+                                            <input type="text" name="key" placeholder="Введите ключ">
+                                            <button type="submit">Сохранить</button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form action="{{ url_for('delete_order', user=user, order_id=order.id) }}" method="POST">
+                                        <button type="submit">Удалить</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>У пользователя нет заказов.</p>
+            {% endif %}
+        </div>
+        <hr>
+        {% endfor %}
+
+    </div>
+
+</body>
+</html>

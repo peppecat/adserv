@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration Statistics</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            display: flex;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        a {
+            display: block;
+            color: #007bff;
+            text-decoration: underline;
+            padding: 15px;
+            width: 100%;
+            text-align: center;
+            font-weight: 600;
+            font-size: 23px;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        .action-btn {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+        }
+        .approve {
+            background-color: #28a745;
+        }
+        .approve:hover {
+            background-color: #218838;
+        }
+        .editable {
+            width: 100px;
+            text-align: center;
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        select {
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background: white;
+        }
+        form{
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="content">
+        <h1>Статистика регистраций по реферальному коду: {{ ref_code }}</h1>
+        <a href="/aff/ref">Назад</a>
+        <form method="POST">
+            <table>
+                <tr>
+                    <th>№</th>
+                    <th>Пользователь</th>
+                    <th>Депозит</th>
+                    <th>Статус</th>
+                    <th>Выплата</th>
+                    <th>Действие</th>
+                </tr>
+                {% if users %}
+                    {% for user in users[::-1] %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ user.name }}</td>
+                            <td><input type="text" name="deposit_{{ user.name }}" class="editable deposit" value="{{ user.deposit }}"></td>
+                            <td>
+                                <select name="status_{{ user.name }}" class="status">
+                                    <option value="pending" {% if user.status == 'pending' %}selected{% endif %}>Pending..</option>
+                                    <option value="approved" {% if user.status == 'approved' %}selected{% endif %}>Approved</option>
+                                </select>
+                            </td>
+                            <td><input type="text" name="payout_{{ user.name }}" class="editable payout" value="{{ user.payout }}"></td>
+                            <td>
+                                <button type="submit" class="action-btn approve">✅ Сохранить</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6">Нет регистраций</td>
+                    </tr>
+                {% endif %}
+            </table>
+        </form>
+    </div>
+    
+
+</body>
+</html>

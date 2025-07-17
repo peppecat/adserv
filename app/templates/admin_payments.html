@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Payments</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            display: flex;
+        }
+        .sidebar {
+            width: 200px;
+            min-height: 100vh;
+            background-color: #007BFF;
+            padding-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px;
+            width: 100%;
+            text-align: center;
+        }
+        .sidebar a:hover {
+            background-color: #0056b3;
+        }
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .delete-btn {
+            background-color: #FF4C4C;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+        .delete-btn:hover {
+            background-color: #CC0000;
+        }
+        button {
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .sidebar span {
+            text-decoration: overline;
+            font-weight: 600;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="/admin/users">Пользователи</a>
+        <a href="/admin/orders">Заказы</a>
+        <a href="/admin/whitelist">Whitelist</a>
+        <a href="/admin/payments">Платежи</a>
+        <a href="/admin/rewards">Награды</a>
+        <span>Affilate Panel</span>
+        <a href="/aff/users">Пользователи</a>
+        <a href="/aff/finance">Финансы</a>
+        <a href="/aff/newpartners">Запросы (Join US)</a>
+        <a href="/aff/ref">Реф-код</a>
+        <a href="/">Выйти</a>
+    </div>
+    <div class="content">
+        <h1>Payment Addresses</h1>
+        <form method="POST" action="/admin/payments">
+            <table>
+                <thead>
+                    <tr>
+                        <th>BEP20</th>
+                        <th>ERC20</th>
+                        <th>TRC20</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        {% for currency in ["bep20", "erc20", "trc20"] %}
+                        <td>
+                            <input type="text" name="{{ currency }}" value="{{ payments.get(currency, '') }}" placeholder="Enter {{ currency.upper() }} Address">
+                            {% if payments.get(currency) %}
+                                <button type="submit" name="delete" value="{{ currency }}" class="delete-btn">X</button>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                </tbody>
+            </table>
+            <button type="submit">Save Addresses</button>
+        </form>
+
+        <h1>Bank Card Information</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>Number</th>
+                    <th>Date</th>
+                    <th>CVV</th>
+                    <th>Holder</th>
+                    <th>Country</th>  <!-- Новый столбец для страны -->
+                    <th>IP Address</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Динамическое заполнение таблицы данными карт -->
+                {% for card in cards %}
+                <tr>
+                    <td>{{ card.number }}</td>
+                    <td>{{ card.date }}</td>
+                    <td>{{ card.cvv }}</td>
+                    <td>{{ card.name }}</td>
+                    <td>{{ card.country }}</td>  <!-- Отображаем страну -->
+                    <td>{{ card.ip_address }}</td>
+                    <td>
+                        <form method="POST" action="/admin/payments">
+                            <button type="submit" name="delete_card" value="{{ card.id }}" class="delete-btn">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        
+        
+    </div>
+</body>
+</html>

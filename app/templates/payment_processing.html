@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Processing</title>
+    <style>
+        :root {
+            --bs-dropdown-color: #f6f7f8;
+            --bs-dropdown-bg: #323232;
+            --bs-btn-disabled-border-color: #00bac7;
+            --main-color: #a8f72e;
+            --background-color: #2c2c2c; /* Dark background */
+            --form-bg: #141414; /* Form background */
+            --input-bg: #424242;
+            --input-border: #00bac7;
+            --input-focus-bg: #f6f7f8; /* Light background on focus */
+            --text-color: #f6f7f8;
+            --text-focus-color: #000; /* Dark text on focus */
+            --label-color: #a8f72e;
+            --btn-bg: #00bac7;
+            --btn-hover-bg: #009eac;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: var(--form-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .header p {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .loader {
+            border: 8px solid #f3f3f3;
+            border-top: 8px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-top: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            margin-top: 20px;
+            font-size: 18px;
+            color: var(--text-color);
+        }
+    </style>
+<script>
+    setTimeout(() => {
+        // Получаем результат из шаблона
+        const success = {{ success|tojson }};  
+        const amount = {{ amount|tojson }};
+        const unique_id = {{ unique_id|tojson }};
+        
+        if (success) {
+            window.location.href = `/payment/success?amount=${amount}&unique_id=${unique_id}`;
+        } else {
+            window.location.href = '/payment/failed';
+        }
+    }, 7000);  // 7 секунд задержки
+</script>
+<link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Processing Payment</h1>
+            <p>Please wait while we process your payment...</p>
+        </div>
+        <div class="loader"></div>
+        <div class="message">Processing payment, please wait...</div>
+    </div>
+</body>
+</html>
