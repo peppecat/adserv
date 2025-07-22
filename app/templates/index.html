@@ -9,6 +9,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
 
     <style>
+        
         body {
             background-color: #121212;
             color: #fff;
@@ -322,26 +323,107 @@
                 padding: 18px;
             }
         }
+            /* Мобильные стили */
+    @media (max-width: 768px) {
+        header {
+            padding: 10px 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .logo {
+            order: 1;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 22px;
+            width: 100%;
+        }
+        
+        .lang-switcher {
+            order: 2;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 0 0 15px 0;
+            width: 100%;
+        }
+        
+        nav {
+            order: 3;
+            width: 100%;
+        }
+        
+        nav ul {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+        }
+        
+        nav ul li {
+            width: 100%;
+            max-width: 280px;
+        }
+        
+        .button-87,
+        .button-88 {
+            width: 100%;
+            padding: 10px 15px;
+            font-size: 14px;
+            justify-content: center;
+            margin: 0;
+            box-sizing: border-box;
+        }
+    }
+
+    /* Для очень маленьких экранов */
+    @media (max-width: 480px) {
+        .logo {
+            font-size: 20px;
+        }
+        
+        .lang-switcher {
+            gap: 8px;
+        }
+        
+        .lang-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        
+        nav ul li {
+            max-width: 220px;
+        }
+        
+        .button-87,
+        .button-88 {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
+    }
     </style>
     <meta name="google-site-verification" content="2sYdO0tXXCoDcsTLDL9ghnnTwsaswHwBaOO1Hd2xiiM" />
 </head>
 <body>
-    <header>
-        <div class="logo">KEYZPANEL.COM</div>
-        <nav>
-            <ul>
-                <li>
-                    <div class="lang-switcher">
-                        <button class="lang-btn active" data-lang="en">EN</button>
-                        <button class="lang-btn" data-lang="ru">RU</button>
-                    </div>
-                </li>
-                <li><a class="button-87" href="/login" data-en="Sign in" data-ru="Войти">Sign in</a></li>
-                <li><a class="button-88" href="/register" data-en="Sign up" data-ru="Регистрация">Sign up</a></li>
-            </ul>
-        </nav>
-    </header>
+<header>
+    <div class="logo">KEYZPANEL.COM</div>
     
+    <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="en">EN</button>
+        <button class="lang-btn" data-lang="ru">RU</button>
+    </div>
+    
+    <nav>
+        <ul>
+            <li><a class="button-87" href="/login" data-en="Sign in" data-ru="Войти">Sign in</a></li>
+            <li><a class="button-88" href="/register" data-en="Sign up" data-ru="Регистрация">Sign up</a></li>
+        </ul>
+    </nav>
+</header>
     <!-- English Content (Steam Top Up version) -->
     <div class="lang-content active" data-lang="en">
         <section class="hero">

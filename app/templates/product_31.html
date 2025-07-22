@@ -444,6 +444,8 @@
         
 <div class="discount-info" style="text-align: center; font-size: 14px; color: #007bff; margin-top: 15px;">
     <p><strong>Loyalty Program (based on expenses OR balance):</strong></p>
+
+    <div class="table-responsive">
     <table class="table table-bordered" style="width: 80%; margin: 0 auto; font-size: 14px;">
         <thead>
             <tr>
@@ -555,8 +557,67 @@
             </tr>
         </tbody>
     </table>
+    </div>
+
     
     <style>
+        /* Стили для адаптивной таблицы */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: -ms-autohiding-scrollbar;
+}
+
+.table-responsive table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1rem;
+    background-color: transparent;
+    border-collapse: collapse;
+}
+
+.table-responsive table th,
+.table-responsive table td {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+}
+
+.table-responsive table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.table-responsive table tbody + tbody {
+    border-top: 2px solid #dee2e6;
+}
+
+.table-responsive table.table-bordered {
+    border: 1px solid #dee2e6;
+}
+
+.table-responsive table.table-bordered th,
+.table-responsive table.table-bordered td {
+    border: 1px solid #dee2e6;
+}
+
+.table-responsive table.table-bordered thead th,
+.table-responsive table.table-bordered thead td {
+    border-bottom-width: 2px;
+}
+
+/* Оптимизация для мобильных устройств */
+@media (max-width: 767px) {
+    .table-responsive table {
+        font-size: 0.9rem;
+    }
+    
+    .table-responsive table th,
+    .table-responsive table td {
+        padding: 0.5rem;
+        white-space: nowrap;
+    }
+}
         .status-locked {
             color: #dc3545;
             font-weight: bold;
