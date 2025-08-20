@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Whitelist</title>
+    <title>Admin Panel - Steam Discount Settings</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
     <style>
         :root {
@@ -236,14 +236,6 @@
             font-size: 0.85rem;
         }
 
-        .btn-danger {
-            background-color: var(--danger-color);
-        }
-
-        .btn-danger:hover {
-            background-color: #c82333;
-        }
-
         .btn-success {
             background-color: var(--success-color);
         }
@@ -267,6 +259,25 @@
         .action-buttons {
             display: flex;
             gap: 5px;
+        }
+
+        .discount-level {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .discount-level input {
+            margin-right: 10px;
+            width: 100px;
+        }
+
+        .discount-level span {
+            margin: 0 10px;
+        }
+
+        .add-level-btn {
+            margin-top: 10px;
         }
 
         /* Responsive adjustments */
@@ -296,9 +307,6 @@
                 min-width: 100%;
                 margin-bottom: 10px;
             }
-            .action-buttons {
-                flex-direction: column;
-            }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -319,7 +327,7 @@
                     <i class="fas fa-shopping-cart"></i>
                     <span>Заказы</span>
                 </a>
-                <a href="/admin/whitelist" class="sidebar-link active">
+                <a href="/admin/whitelist" class="sidebar-link">
                     <i class="fas fa-list-check"></i>
                     <span>Whitelist</span>
                 </a>
@@ -331,7 +339,7 @@
                     <i class="fas fa-chart-line"></i>
                     <span>Финансовая аналитика</span>
                 </a>
-                <a href="/admin/steam-settings" class="sidebar-link">
+                <a href="/admin/steam-settings" class="sidebar-link active">
                     <i class="fas fa-cog"></i>
                     <span>Steam Settings</span>
                 </a>
@@ -360,7 +368,7 @@
 
     <div class="content">
         <div class="header">
-            <h1>Управление Whitelist</h1>
+            <h1>Steam Wallet TopUp Settings</h1>
             <div class="user-info">
                 <div class="user-avatar">A</div>
                 <span>Администратор</span>
@@ -369,57 +377,61 @@
 
         <div class="card">
             <div class="card-header">
-                <h2>Добавить пользователя в Whitelist</h2>
+                <h2>Discount Levels Configuration</h2>
             </div>
-            <form method="POST">
-                <input type="hidden" name="action" value="add">
-                <div class="form-row">
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="target_user">Выберите пользователя:</label>
-                            <select name="target_user" required>
-                                {% for user in users %}
-                                    <option value="{{ user }}">{{ user }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+            <form method="POST" action="{{ url_for('steam_settings') }}">
+                <div class="form-group">
+                        <label for="base_fee">Base Fee (%)</label>
+                        <input type="number" name="base_fee" id="base_fee" 
+                            class="form-control" value="{{ base_fee }}" 
+                            min="0" max="100" required>
+                </div>
+                <div id="discount-levels-container">
+                    {% for level in discount_levels %}
+                    <div class="discount-level">
+                        <input type="number" name="balance_threshold" placeholder="Порог баланса" 
+                            value="{{ level[0] }}" min="0" step="1" required>
+                        <span>→</span>
+                        <input type="number" name="discount" placeholder="Скидка %" 
+                            value="{{ level[1] }}" min="0" max="100" step="1" required>
+                        <span>% скидка</span>
+                        {% if loop.index0 != 0 %}
+                        <button type="button" class="btn btn-sm btn-danger remove-level" 
+                                style="margin-left: 10px;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
                     </div>
-                    <div class="form-col" style="align-self: flex-end;">
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-plus"></i> Добавить
-                            </button>
-                        </div>
-                    </div>
+                    {% endfor %}
+                </div>
+                <button type="button" id="add-level-btn" class="btn btn-secondary add-level-btn">
+                    <i class="fas fa-plus"></i> Add Discount Level
+                </button>
+                <div class="form-group" style="margin-top: 20px;">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
                 </div>
             </form>
         </div>
 
         <div class="card">
             <div class="card-header">
-                <h2>Список Whitelist</h2>
+                <h2>Current Discount Structure</h2>
             </div>
             <div class="table-responsive">
                 <table>
                     <thead>
                         <tr>
-                            <th>Пользователь</th>
-                            <th>Действия</th>
+                            <th>Minimum Balance</th>
+                            <th>Discount</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for user in whitelist_users %}
+                        {% for level in discount_levels %}
                         <tr>
-                            <td>{{ user }}</td>
-                            <td class="action-buttons">
-                                <form method="POST" onsubmit="return confirm('Удалить пользователя {{ user }} из Whitelist?');">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="username" value="{{ user }}">
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i> Удалить
-                                    </button>
-                                </form>
-                            </td>
+                            <td>${{ level[0] }}+</td>
+                            <td>{{ level[1] }}%</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -427,5 +439,66 @@
             </div>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add new discount level
+            document.getElementById('add-level-btn').addEventListener('click', function() {
+                const container = document.getElementById('discount-levels-container');
+                const newLevel = document.createElement('div');
+                newLevel.className = 'discount-level';
+                newLevel.innerHTML = `
+                    <input type="number" name="balance_threshold" placeholder="Balance threshold" min="0" step="1" required>
+                    <span>→</span>
+                    <input type="number" name="discount" placeholder="Discount %" min="0" max="100" step="1" required>
+                    <span>% discount</span>
+                    <button type="button" class="btn btn-sm btn-danger remove-level" style="margin-left: 10px;">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                `;
+                container.appendChild(newLevel);
+                
+                // Add event listener to the new remove button
+                newLevel.querySelector('.remove-level').addEventListener('click', function() {
+                    container.removeChild(newLevel);
+                });
+            });
+            
+            // Add event listeners to existing remove buttons
+            document.querySelectorAll('.remove-level').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.parentNode.parentNode.removeChild(this.parentNode);
+                });
+            });
+            
+            // Before form submission, we need to ensure the levels are sorted
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const container = document.getElementById('discount-levels-container');
+                const levels = Array.from(container.children);
+                
+                // Sort levels by balance threshold (ascending)
+                levels.sort((a, b) => {
+                    const aValue = parseFloat(a.querySelector('input[name="balance_threshold"]').value) || 0;
+                    const bValue = parseFloat(b.querySelector('input[name="balance_threshold"]').value) || 0;
+                    return aValue - bValue;
+                });
+                
+                // Rebuild the container with sorted levels
+                container.innerHTML = '';
+                levels.forEach(level => container.appendChild(level));
+                
+                // Ensure the base level (0%) exists
+                const baseLevelExists = levels.some(level => {
+                    const value = parseFloat(level.querySelector('input[name="balance_threshold"]').value) || 0;
+                    return value === 0;
+                });
+                
+                if (!baseLevelExists) {
+                    alert('You must have a base level with $0 threshold');
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

@@ -3,248 +3,1101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel</title>
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+    <title>Admin Panel - Users</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
+        :root {
+            --primary-color: #4a6bff;
+            --secondary-color: #f8f9fa;
+            --accent-color: #6c757d;
+            --text-color: #343a40;
+            --light-text: #f8f9fa;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--text-color);
             display: flex;
             min-height: 100vh;
+            line-height: 1.6;
         }
-        h1, h2 {
-            text-align: center;
-            color: #333;
-        }
+
         .sidebar {
-            width: 200px;
-            background-color: #007BFF;
-            padding-top: 20px;
+            width: 250px;
+            background: linear-gradient(135deg, #2c3e50, #4a6bff);
+            padding: 20px 0;
             display: flex;
             flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            color: var(--light-text);
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .sidebar-nav {
+            flex-grow: 1;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section-title {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            padding: 0 20px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-link {
+            display: flex;
             align-items: center;
-        }
-        .sidebar a {
-            display: block;
-            color: white;
+            color: var(--light-text);
             text-decoration: none;
-            padding: 15px;
-            width: 100%;
-            text-align: center;
+            padding: 12px 20px;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
         }
-        .sidebar a:hover {
-            background-color: #0056b3;
+
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--light-text);
         }
+
+        .sidebar-link i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left-color: var(--light-text);
+            font-weight: 500;
+        }
+
         .content {
             flex-grow: 1;
-            padding: 20px;
+            padding: 30px;
+            overflow-y: auto;
         }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .card-header h2 {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 15px 0;
         }
+
         th, td {
             padding: 12px 15px;
-            text-align: center;
-            border: 1px solid #ddd;
+            text-align: left;
+            border-bottom: 1px solid #eee;
         }
+
         th {
-            background-color: #007BFF;
+            background-color: var(--primary-color);
             color: white;
+            font-weight: 500;
+            position: relative;
+            cursor: pointer;
+            user-select: none;
         }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
+
+        th.sortable:hover {
+            background-color: #3a5bef;
         }
+
+        th.sort-asc::after {
+            content: " ↑";
+            font-size: 0.8em;
+        }
+
+        th.sort-desc::after {
+            content: " ↓";
+            font-size: 0.8em;
+        }
+
         tr:hover {
-            background-color: #f1f1f1;
+            background-color: #f8f9fa;
         }
-        form {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
+
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
         }
-        select, input[type="number"], button {
-            padding: 5px;
-            font-size: 14px;
+
+        .badge-success {
+            background-color: #d4edda;
+            color: var(--success-color);
         }
-        button {
-            background-color: #007BFF;
+
+        .badge-warning {
+            background-color: #fff3cd;
+            color: var(--warning-color);
+        }
+
+        .badge-danger {
+            background-color: #f8d7da;
+            color: var(--danger-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        select, input, button {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 107, 255, 0.2);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            border-radius: 4px;
+            border-radius: var(--border-radius);
             cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
-        .logout {
-            display: block;
+            transition: var(--transition);
+            font-weight: 500;
             text-align: center;
-            margin-top: 20px;
-            text-decoration: none;
-            color: #007BFF;
+        }
+
+        .btn:hover {
+            background-color: #3a5bef;
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.85rem;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+
+        .form-col {
+            flex: 1;
+            padding: 0 10px;
+            min-width: 200px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+
+        .status-select {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+
+        .kyc-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .kyc-not_required {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+
+        .kyc-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .kyc-verified {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .user-status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .user-status-banned {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .kyc-status-cell {
+            min-width: 120px;
+        }
+
+        .user-status-cell {
+            min-width: 100px;
+        }
+
+        .modal {
+            z-index: 1050;
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-dialog {
+            max-width: 600px;
+            margin: 1.75rem auto;
+        }
+
+        .modal-content {
+            position: relative;
+            background-color: #fff;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            animation-name: animatetop;
+            animation-duration: 0.4s;
+        }
+
+        @keyframes animatetop {
+            from {top: -300px; opacity: 0}
+            to {top: 0; opacity: 1}
+        }
+
+        .modal-header {
+            padding: 2px 16px;
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .modal-body {
+            padding: 2px 16px;
+        }
+
+        .modal-footer {
+            padding: 2px 16px;
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .close {
+            color: white;
+            float: right;
+            font-size: 28px;
             font-weight: bold;
         }
-        .logout:hover {
-            text-decoration: underline;
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
         }
-        .sidebar span{
-            text-decoration: overline;
-            font-weight: 600;
-            font-size: 20px;
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .alert-info {
+            color: #0c5460;
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+        }
+
+        .alert-warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            .sidebar-section-title, .sidebar-link span {
+                display: none;
+            }
+            .sidebar-link {
+                justify-content: center;
+                padding: 12px 0;
+            }
+            .sidebar-link i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 15px;
+            }
+            .form-col {
+                min-width: 100%;
+                margin-bottom: 10px;
+            }
+            .modal-content {
+                width: 95%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <a href="/admin/users">Пользователи</a>
-        <a href="/admin/orders">Заказы</a>
-        <a href="/admin/whitelist">Whitelist</a>
-        <a href="/admin/payments">Платежи</a>
-        <a href="/admin/rewards">Награды</a>
-        <span>Affilate Panel</span>
-        <a href="/aff/users">Пользователи</a>
-        <a href="/aff/finance">Финансы</a>
-        <a href="/aff/newpartners">Запросы (Join US)</a>
-        <a href="/aff/ref">Реф-код</a>
-        <a href="/">Выйти</a>
+        <div class="sidebar-header">
+            <h2>Admin Panel</h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Main</div>
+                <a href="/admin/users" class="sidebar-link active">
+                    <i class="fas fa-users"></i>
+                    <span>Пользователи</span>
+                </a>
+                <a href="/admin/orders" class="sidebar-link">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Заказы</span>
+                </a>
+                <a href="/admin/whitelist" class="sidebar-link">
+                    <i class="fas fa-list-check"></i>
+                    <span>Whitelist</span>
+                </a>
+                <a href="/admin/payments" class="sidebar-link">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Платежи</span>
+                </a>
+                <a href="/admin/financial-analytics" class="sidebar-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Финансовая аналитика</span>
+                </a>
+                <a href="/admin/steam-settings" class="sidebar-link">
+                    <i class="fas fa-cog"></i>
+                    <span>Steam Settings</span>
+                </a>
+                <a href="/admin/telegram-settings" class="sidebar-link">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Уведомления Telegram</span>
+                </a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Affiliate</div>
+                <a href="/aff/newpartners" class="sidebar-link">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Запросы (Join US)</span>
+                </a>
+                <a href="/aff/approved" class="sidebar-link">
+                    <i class="fas fa-store"></i>
+                    <span>Подтвержденные магазины</span>
+                </a>
+            </div>
+        </div>
+        <a href="/logout" class="sidebar-link" style="margin-top: auto;">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Выйти</span>
+        </a>
     </div>
-    <div class="content"><h1>Админ-панель</h1>
-        <h2>Список пользователей:</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Имя пользователя</th>
-                    <th>Пароль</th>
-                    <th>Баланс TRC20</th>
-                    <th>Баланс ERC20</th>
-                    <th>Баланс BEP20</th>
-                    <th>Баланс Card</th> <!-- Добавляем новый столбец -->
-                    <th>Заказы</th>
-                    <th>Расходы</th>
-                    <th>Действия</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user, info in users.items() %}
-                <tr>
-                    <td>{{ user }}</td>
-                    <td>{{ info['password'] }}</td>
-                    <td>{{ info['balance']['trc20'] if 'balance' in info and 'trc20' in info['balance'] else '—' }}$</td>
-                    <td>{{ info['balance']['erc20'] if 'balance' in info and 'erc20' in info['balance'] else '—' }}$</td>
-                    <td>{{ info['balance']['bep20'] | round(2) if 'balance' in info and 'bep20' in info['balance'] else '—' }}$</td>
-                    <td>{{ info['balance']['card'] | round(2) if 'balance' in info and 'card' in info['balance'] else '—' }}$</td> <!-- Выводим баланс карты -->
-                    <td>{{ info['orders'] }}</td>
-                    <td>{{ info['expenses'] }}</td>
-                    <td>
-                        <form method="post">
-                            <input type="hidden" name="action" value="edit_balance">
-                            <input type="hidden" name="target_user" value="{{ user }}">
-                            <select name="balance_type">
+
+    <div class="content">
+        <div class="header">
+            <h1>Управление пользователями</h1>
+            <div class="user-info">
+                <div class="user-avatar">A</div>
+                <span>Администратор</span>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Управление балансами</h2>
+            </div>
+            <form method="post">
+                <input type="hidden" name="action" value="edit_balance">
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="target_user">Пользователь</label>
+                            <select name="target_user" id="target_user" required>
+                                {% for user in users.keys() %}
+                                <option value="{{ user }}">{{ user }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="balance_type">Тип баланса</label>
+                            <select name="balance_type" id="balance_type" required>
                                 <option value="trc20">TRC20</option>
                                 <option value="erc20">ERC20</option>
                                 <option value="bep20">BEP20</option>
-                                <option value="card">Card</option> <!-- Добавляем опцию для Card -->
+                                <option value="card">Card</option>
                                 <option value="orders">Orders</option>
                                 <option value="expenses">Expenses</option>
                             </select>
-                            <input type="number" name="new_balance" placeholder="Внести данные">
-                            <button type="submit">Изменить</button>
-                        </form>
-                        <!-- Форма для удаления пользователя -->
-                        <form method="post" onsubmit="return confirm('Вы уверены, что хотите удалить пользователя {{ user }}?');">
-                            <input type="hidden" name="action" value="delete_user">
-                            <input type="hidden" name="target_user" value="{{ user }}">
-                            <button type="submit" style="color: red;">Удалить</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>        
-        </table>
-    
-        <h2>Управление пополнениями:</h2>
-        <form method="post">
-            <input type="hidden" name="action" value="edit_topup">
-            <label for="target_user">Пользователь:</label>
-            <select name="target_user">
-                {% for user in users.keys() %}
-                <option value="{{ user }}">{{ user }}</option>
-                {% endfor %}
-            </select>
-            <label for="date">Дата и время:</label>
-            <input type="datetime-local" name="date" placeholder="Дата и время">        
-            <label for="network">Сеть:</label>
-            <select name="network">
-                <option value="TRC20">TRC20</option>
-                <option value="ERC20">ERC20</option>
-                <option value="BEP20">BEP20</option>
-                <option value="Card">Card</option> <!-- Добавляем опцию Card -->
-            </select>        
-            <label for="amount">Сумма:</label>
-            <input type="number" step="0.01" name="amount" required>
-            <label for="status">Статус:</label>
-            <select name="status">
-                <option value="Success">Success</option>
-                <option value="Pending">Pending</option>
-                <option value="Failed">Failed</option>
-            </select>
-            <button type="submit">Добавить</button>
-        </form>
-        <h2>История пополнений:</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Пользователь</th>
-                    <th>Дата</th>
-                    <th>Криптосеть</th>
-                    <th>Сумма</th>
-                    <th>Статус</th>
-                    <th>Действие</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for user, info in users.items() %}
-                {% for topup in info['topups'] %}
-                <tr>
-                    <td>{{ user }}</td>
-                    <td>{{ topup['date'] | replace('T', ' ') }}</td>
-                    <td>{{ topup['network'] }}</td>
-                    <td>{{ topup['amount'] }}</td>
-                    <td>
-                        <form method="post">
-                            <input type="hidden" name="action" value="edit_topup_status">
-                            <input type="hidden" name="target_user" value="{{ user }}">
-                            <input type="hidden" name="date" value="{{ topup['date'] }}">
-                            <input type="hidden" name="network" value="{{ topup['network'] }}">
-                            <select name="new_status">
-                                <option value="Success" {% if topup['status'] == 'Success' %}selected{% endif %}>Success</option>
-                                <option value="Pending" {% if topup['status'] == 'Pending' %}selected{% endif %}>Pending</option>
-                                <option value="Failed" {% if topup['status'] == 'Failed' %}selected{% endif %}>Failed</option>
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="new_balance">Сумма</label>
+                            <input type="number" name="new_balance" id="new_balance" step="0.01" placeholder="Введите сумму" required>
+                        </div>
+                    </div>
+                    <div class="form-col" style="align-self: flex-end;">
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Добавить пополнение</h2>
+            </div>
+            <form method="POST" action="">
+                <input type="hidden" name="action" value="edit_topup">
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="target_user">Пользователь</label>
+                            <select name="target_user" id="target_user_select" required>
+                                <option value="" disabled selected>Выберите пользователя</option>
+                                {% for user in users.keys() %}
+                                <option value="{{ user }}">{{ user }}</option>
+                                {% endfor %}
                             </select>
-                            <button type="submit">Сохранить</button>
-                        </form>
-                    </td>
-                    <td>
-                        <form method="post" onsubmit="return confirm('Вы уверены, что хотите удалить этот платеж?');">
-                            <input type="hidden" name="action" value="delete_topup">
-                            <input type="hidden" name="target_user" value="{{ user }}">
-                            <input type="hidden" name="date" value="{{ topup['date'] }}">
-                            <input type="hidden" name="network" value="{{ topup['network'] }}">
-                            <button type="submit" style="color: red;">Удалить</button>
-                        </form>
-                    </td>
-                </tr>
-                {% endfor %}
-                {% endfor %}
-            </tbody>
-        </table>
-        
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="date">Дата и время (с секундами)</label>
+                            <input type="datetime-local" name="date" id="date" required 
+                                   step="1"
+                                   value="{{ now }}" 
+                                   min="2020-01-01T00:00:00" max="2030-12-31T23:59:59">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="network">Сеть</label>
+                            <select name="network" id="network" required>
+                                <option value="" disabled selected>Выберите сеть</option>
+                                <option value="TRC20">TRC20</option>
+                                <option value="ERC20">ERC20</option>
+                                <option value="BEP20">BEP20</option>
+                                <option value="Card">Card</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="amount">Сумма ($)</label>
+                            <input type="number" step="0.01" name="amount" id="amount" 
+                                   min="0" max="100000" required 
+                                   placeholder="Введите сумму">
+                        </div>
+                    </div>
+                    <div class="form-col">
+                        <div class="form-group">
+                            <label for="status">Статус</label>
+                            <select name="status" id="status" required>
+                                <option value="" disabled selected>Выберите статус</option>
+                                <option value="Success">Success</option>
+                                <option value="Pending">Pending</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-col" style="align-self: flex-end;">
+                        <div class="form-group">
+                            <button type="submit" class="btn">
+                                <i class="fas fa-plus"></i> Добавить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Список пользователей</h2>
+            </div>
+            <div class="table-responsive">
+                <table class="table" id="usersTable">
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-sort="username">Имя пользователя</th>
+                            <th>Статус</th>
+                            <th>KYC Статус</th>
+                            <th class="sortable" data-sort="trc20">Баланс TRC20</th>
+                            <th class="sortable" data-sort="erc20">Баланс ERC20</th>
+                            <th class="sortable" data-sort="bep20">Баланс BEP20</th>
+                            <th class="sortable" data-sort="card">Баланс Card</th>
+                            <th class="sortable" data-sort="orders">Заказы</th>
+                            <th class="sortable" data-sort="expenses">Расходы</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user, info in users.items() %}
+                        <tr data-username="{{ user }}" 
+                            data-trc20="{{ info['balance']['trc20'] if 'balance' in info and 'trc20' in info['balance'] else 0 }}" 
+                            data-erc20="{{ info['balance']['erc20'] if 'balance' in info and 'erc20' in info['balance'] else 0 }}" 
+                            data-bep20="{{ info['balance']['bep20'] | round(2) if 'balance' in info and 'bep20' in info['balance'] else 0 }}" 
+                            data-card="{{ info['balance']['card'] | round(2) if 'balance' in info and 'card' in info['balance'] else 0 }}" 
+                            data-orders="{{ info.get('orders', 0) }}" 
+                            data-expenses="{{ info.get('expenses', 0) }}">
+                            <td>
+                                <div class="username-with-password">
+                                    <strong>{{ user }}</strong>
+                                    {% if 'password' in info %}
+                                    <span class="user-password">{{ info['password'] }}</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="user-status-cell">
+                                <span class="kyc-badge {% if info.get('is_banned', False) %}user-status-banned{% else %}user-status-active{% endif %}">
+                                    {% if info.get('is_banned', False) %}
+                                        Заблокирован
+                                    {% else %}
+                                        Активен
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td class="kyc-status-cell">
+                                <span class="kyc-badge kyc-{{ info.get('kyc_status', 'not_required') }}">
+                                    {% if info.get('kyc_status') == 'not_required' %}
+                                        Не требуется
+                                    {% elif info.get('kyc_status') == 'pending' %}
+                                        Не пройден
+                                    {% elif info.get('kyc_status') == 'verified' %}
+                                        Пройден
+                                    {% else %}
+                                        Не указан
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <td>{{ info['balance']['trc20'] if 'balance' in info and 'trc20' in info['balance'] else '—' }}$</td>
+                            <td>{{ info['balance']['erc20'] if 'balance' in info and 'erc20' in info['balance'] else '—' }}$</td>
+                            <td>{{ info['balance']['bep20'] | round(2) if 'balance' in info and 'bep20' in info['balance'] else '—' }}$</td>
+                            <td>{{ info['balance']['card'] | round(2) if 'balance' in info and 'card' in info['balance'] else '—' }}$</td>
+                            <td>{{ info.get('orders', 0) }}</td>
+                            <td>{{ info.get('expenses', 0) }}$</td>
+                            <td class="action-buttons">
+                                <button class="btn btn-sm btn-primary" 
+                                        onclick="openEditModal(
+                                            '{{ user }}', 
+                                            '{{ info.get('kyc_status', 'not_required') }}',
+                                            {{ 'true' if info.get('is_banned', False) else 'false' }}
+                                        )">
+                                    <i class="fas fa-edit"></i> Редактировать
+                                </button>
+                                <form method="post" onsubmit="return confirm('Удалить пользователя {{ user }}?');" style="display: inline;">
+                                    <input type="hidden" name="action" value="delete_user">
+                                    <input type="hidden" name="target_user" value="{{ user }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2>История пополнений</h2>
+                    <div>
+                        <select id="userFilter" class="form-select" style="width: 200px;">
+                            <option value="all">Все пользователи</option>
+                            {% for user in users.keys() %}
+                            <option value="{{ user }}">{{ user }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table" id="topupsTable">
+                    <thead>
+                        <tr>
+                            <th>Пользователь</th>
+                            <th>Дата</th>
+                            <th>Сеть</th>
+                            <th>Сумма</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user, info in users.items() %}
+                        {% for topup in info.get('topups', []) %}
+                        <tr data-user="{{ user }}">
+                            <td>{{ user }}</td>
+                            <td>{{ topup['date'] | replace('T', ' ') }}</td>
+                            <td>{{ topup['network'] }}</td>
+                            <td>{{ topup['amount'] }}$</td>
+                            <td>
+                                <form method="post" class="status-form">
+                                    <input type="hidden" name="action" value="edit_topup_status">
+                                    <input type="hidden" name="target_user" value="{{ user }}">
+                                    <input type="hidden" name="date" value="{{ topup['date'] }}">
+                                    <input type="hidden" name="network" value="{{ topup['network'] }}">
+                                    <select name="new_status" onchange="this.form.submit()" class="status-select">
+                                        <option value="Success" {% if topup['status'] == 'Success' %}selected{% endif %}>Success</option>
+                                        <option value="Pending" {% if topup['status'] == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="Failed" {% if topup['status'] == 'Failed' %}selected{% endif %}>Failed</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td>
+                                <form method="post" onsubmit="return confirm('Удалить эту запись?');" style="display: inline;">
+                                    <input type="hidden" name="action" value="delete_topup">
+                                    <input type="hidden" name="target_user" value="{{ user }}">
+                                    <input type="hidden" name="date" value="{{ topup['date'] }}">
+                                    <input type="hidden" name="network" value="{{ topup['network'] }}">
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
     </div>
 
+    <!-- Modal for User Editing -->
+    <div id="editUserModal" class="modal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактирование пользователя</h5>
+                    <button type="button" class="btn-close" onclick="closeModal()"></button>
+                </div>
+                <form method="post" id="userForm">
+                    <input type="hidden" name="action" value="update_user">
+                    <input type="hidden" name="target_user" id="modalUsername">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="userStatus">Статус пользователя</label>
+                            <select class="form-control" name="is_banned" id="userStatus" required>
+                                <option value="false">Активен</option>
+                                <option value="true">Заблокирован</option>
+                            </select>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="kycStatus">KYC Статус</label>
+                            <select class="form-control" name="kyc_status" id="kycStatus" required>
+                                <option value="not_required">Не требуется</option>
+                                <option value="pending">Не пройден</option>
+                                <option value="verified">Пройден</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Закрыть</button>
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>    <div id="editUserModal" class="modal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактирование пользователя</h5>
+                    <button type="button" class="btn-close" onclick="closeModal()"></button>
+                </div>
+                <form method="post" id="userForm">
+                    <input type="hidden" name="action" value="update_user">
+                    <input type="hidden" name="target_user" id="modalUsername">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="userStatus">Статус пользователя</label>
+                            <select class="form-control" name="is_banned" id="userStatus" required>
+                                <option value="false">Активен</option>
+                                <option value="true">Заблокирован</option>
+                            </select>
+                        </div>
+                        <div class="form-group mt-3">
+                            <label for="kycStatus">KYC Статус</label>
+                            <select class="form-control" name="kyc_status" id="kycStatus" required>
+                                <option value="not_required">Не требуется</option>
+                                <option value="pending">Не пройден</option>
+                                <option value="verified">Пройден</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Закрыть</button>
+                        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Get the modal
+        var modal = document.getElementById("editUserModal");
+
+        // Function to open modal
+        function openEditModal(username, kycStatus, isBanned) {
+            document.getElementById('modalUsername').value = username;
+            document.getElementById('kycStatus').value = kycStatus;
+            document.getElementById('userStatus').value = isBanned ? 'true' : 'false';
+            modal.style.display = "block";
+        }
+
+        // Function to close modal
+        function closeModal() {
+            modal.style.display = "none";
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Form submission handler
+        document.getElementById('userForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'text/html',
+                }
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+                // Filter topups by user
+        document.getElementById('userFilter').addEventListener('change', function() {
+            const selectedUser = this.value;
+            const rows = document.querySelectorAll('#topupsTable tbody tr');
+            
+            rows.forEach(row => {
+                if (selectedUser === 'all' || row.dataset.user === selectedUser) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+
+        // Initialize datetime field with current time
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 19);
+            document.getElementById('date').value = localISOTime;
+            
+            // Initialize sorting
+            initSorting();
+        });
+
+        // Initialize tooltips
+        $(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
+
+        // Sorting functionality
+        function initSorting() {
+            const table = document.getElementById('usersTable');
+            const headers = table.querySelectorAll('th.sortable');
+            const tbody = table.querySelector('tbody');
+            
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortKey = header.dataset.sort;
+                    const isAscending = !header.classList.contains('sort-asc');
+                    
+                    // Reset all headers
+                    headers.forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+                    
+                    // Set current header state
+                    if (isAscending) {
+                        header.classList.add('sort-asc');
+                    } else {
+                        header.classList.add('sort-desc');
+                    }
+                    
+                    // Sort rows
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    
+                    rows.sort((a, b) => {
+                        let aValue, bValue;
+                        
+                        if (sortKey === 'username') {
+                            aValue = a.dataset.username.toLowerCase();
+                            bValue = b.dataset.username.toLowerCase();
+                            return isAscending 
+                                ? aValue.localeCompare(bValue)
+                                : bValue.localeCompare(aValue);
+                        } else {
+                            aValue = parseFloat(a.dataset[sortKey]) || 0;
+                            bValue = parseFloat(b.dataset[sortKey]) || 0;
+                            return isAscending 
+                                ? aValue - bValue
+                                : bValue - aValue;
+                        }
+                    });
+                    
+                    // Reattach sorted rows
+                    rows.forEach(row => tbody.appendChild(row));
+                });
+            });
+        }        // Initialize datetime field with current time
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const timezoneOffset = now.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(now - timezoneOffset)).toISOString().slice(0, 19);
+            document.getElementById('date').value = localISOTime;
+            
+            // Initialize sorting
+            initSorting();
+        });
+
+        // Initialize tooltips
+        $(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+        });
+
+        // Sorting functionality
+        function initSorting() {
+            const table = document.getElementById('usersTable');
+            const headers = table.querySelectorAll('th.sortable');
+            const tbody = table.querySelector('tbody');
+            
+            headers.forEach(header => {
+                header.addEventListener('click', () => {
+                    const sortKey = header.dataset.sort;
+                    const isAscending = !header.classList.contains('sort-asc');
+                    
+                    // Reset all headers
+                    headers.forEach(h => {
+                        h.classList.remove('sort-asc', 'sort-desc');
+                    });
+                    
+                    // Set current header state
+                    if (isAscending) {
+                        header.classList.add('sort-asc');
+                    } else {
+                        header.classList.add('sort-desc');
+                    }
+                    
+                    // Sort rows
+                    const rows = Array.from(tbody.querySelectorAll('tr'));
+                    
+                    rows.sort((a, b) => {
+                        let aValue, bValue;
+                        
+                        if (sortKey === 'username') {
+                            aValue = a.dataset.username.toLowerCase();
+                            bValue = b.dataset.username.toLowerCase();
+                            return isAscending 
+                                ? aValue.localeCompare(bValue)
+                                : bValue.localeCompare(aValue);
+                        } else {
+                            aValue = parseFloat(a.dataset[sortKey]) || 0;
+                            bValue = parseFloat(b.dataset[sortKey]) || 0;
+                            return isAscending 
+                                ? aValue - bValue
+                                : bValue - aValue;
+                        }
+                    });
+                    
+                    // Reattach sorted rows
+                    rows.forEach(row => tbody.appendChild(row));
+                });
+            });
+        }
+    </script>
 </body>
 </html>

@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Data Management</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <style>
+        :root {
+            --primary-color: #4a6bff;
+            --secondary-color: #f8f9fa;
+            --accent-color: #6c757d;
+            --text-color: #343a40;
+            --light-text: #f8f9fa;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, #2c3e50, #4a6bff);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            color: var(--light-text);
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .sidebar-nav {
+            flex-grow: 1;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section-title {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            padding: 0 20px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            color: var(--light-text);
+            text-decoration: none;
+            padding: 12px 20px;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--light-text);
+        }
+
+        .sidebar-link i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left-color: var(--light-text);
+            font-weight: 500;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .card-header h2 {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        select, input, button, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        select:focus, input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 107, 255, 0.2);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background-color: #3a5bef;
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.85rem;
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #218838;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: var(--text-color);
+        }
+
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
+
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 0 -10px;
+        }
+
+        .form-col {
+            flex: 1;
+            padding: 0 10px;
+            min-width: 200px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .json-editor {
+            width: 100%;
+            min-height: 300px;
+            font-family: monospace;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            background-color: #f8f9fa;
+        }
+
+        .file-list {
+            list-style-type: none;
+        }
+
+        .file-list li {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-list li:last-child {
+            border-bottom: none;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .status-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: var(--border-radius);
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: var(--success-color);
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: var(--danger-color);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            .sidebar-section-title, .sidebar-link span {
+                display: none;
+            }
+            .sidebar-link {
+                justify-content: center;
+                padding: 12px 0;
+            }
+            .sidebar-link i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 15px;
+            }
+            .form-col {
+                min-width: 100%;
+                margin-bottom: 10px;
+            }
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Admin Panel</h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Main</div>
+                <a href="/admin/users" class="sidebar-link">
+                    <i class="fas fa-users"></i>
+                    <span>Пользователи</span>
+                </a>
+                <a href="/admin/orders" class="sidebar-link">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Заказы</span>
+                </a>
+                <a href="/admin/whitelist" class="sidebar-link">
+                    <i class="fas fa-list-check"></i>
+                    <span>Whitelist</span>
+                </a>
+                <a href="/admin/payments" class="sidebar-link">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Платежи</span>
+                </a>
+                <a href="/admin/financial-analytics" class="sidebar-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Финансовая аналитика</span>
+                </a>
+                <a href="/admin/data-management" class="sidebar-link active">
+                    <i class="fas fa-database"></i>
+                    <span>Data Management</span>
+                </a>
+                <a href="/admin/steam-settings" class="sidebar-link">
+                    <i class="fas fa-cog"></i>
+                    <span>Steam Settings</span>
+                </a>
+                <a href="/admin/telegram-settings" class="sidebar-link">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Уведомления Telegram</span>
+                </a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Affiliate</div>
+                <a href="/aff/newpartners" class="sidebar-link">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Запросы (Join US)</span>
+                </a>
+                <a href="/aff/approved" class="sidebar-link">
+                    <i class="fas fa-store"></i>
+                    <span>Подтвержденные магазины</span>
+                </a>
+            </div>
+        </div>
+        <a href="/" class="sidebar-link" style="margin-top: auto;">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Выйти</span>
+        </a>
+    </div>
+
+    <div class="content">
+        <div class="header">
+            <h1>Data Management</h1>
+            <div class="user-info">
+                <div class="user-avatar">A</div>
+                <span>Администратор</span>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Export Data</h2>
+            </div>
+            <div class="form-group">
+                <label for="export-select">Select Data to Export:</label>
+                <select id="export-select" class="form-control">
+                    <option value="users">Users Data</option>
+                    <option value="orders">Orders Data</option>
+                    <option value="payments">Payments Data</option>
+                    <option value="whitelist">Whitelist Data</option>
+                    <option value="products">Products Data</option>
+                    <option value="referrals">Referrals Data</option>
+                    <option value="promocodes">Promocodes Data</option>
+                    <option value="affiliates">Affiliates Data</option>
+                    <option value="partners">Partners Data</option>
+                    <option value="rewards">Rewards Data</option>
+                    <option value="user_rewards">User Rewards Data</option>
+                    <option value="cards">Cards Data</option>
+                    <option value="steam_discounts">Steam Discounts Data</option>
+                    <option value="stores">Stores Data</option>
+                    <option value="reseller_stores">Reseller Stores Data</option>
+                    <option value="all">All Data (Complete Backup)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button id="export-btn" class="btn btn-success">
+                    <i class="fas fa-download"></i> Export Selected Data
+                </button>
+            </div>
+            <div id="export-status" class="status-message" style="display: none;"></div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Import Data</h2>
+            </div>
+            <form id="import-form" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="import-select">Select Data Type:</label>
+                    <select id="import-select" name="data_type" class="form-control" required>
+                        <option value="users">Users Data</option>
+                        <option value="orders">Orders Data</option>
+                        <option value="payments">Payments Data</option>
+                        <option value="whitelist">Whitelist Data</option>
+                        <option value="products">Products Data</option>
+                        <option value="referrals">Referrals Data</option>
+                        <option value="promocodes">Promocodes Data</option>
+                        <option value="affiliates">Affiliates Data</option>
+                        <option value="partners">Partners Data</option>
+                        <option value="rewards">Rewards Data</option>
+                        <option value="user_rewards">User Rewards Data</option>
+                        <option value="cards">Cards Data</option>
+                        <option value="steam_discounts">Steam Discounts Data</option>
+                        <option value="stores">Stores Data</option>
+                        <option value="reseller_stores">Reseller Stores Data</option>
+                        <option value="all">All Data (Complete Restore)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="import-file">Select JSON File:</label>
+                    <input type="file" id="import-file" name="file" accept=".json" required>
+                </div>
+                <div class="form-group">
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Import Data
+                        </button>
+                        <button type="button" id="preview-btn" class="btn btn-warning">
+                            <i class="fas fa-eye"></i> Preview Data
+                        </button>
+                    </div>
+                </div>
+            </form>
+            <div id="import-status" class="status-message" style="display: none;"></div>
+        </div>
+
+        <div class="card" id="preview-card" style="display: none;">
+            <div class="card-header">
+                <h2>Data Preview</h2>
+            </div>
+            <textarea id="json-preview" class="json-editor" readonly></textarea>
+            <div class="form-group" style="margin-top: 15px;">
+                <button id="confirm-import-btn" class="btn btn-success" style="display: none;">
+                    <i class="fas fa-check"></i> Confirm Import
+                </button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Available Data Files</h2>
+            </div>
+            <ul class="file-list">
+                <li>
+                    <span><i class="fas fa-file-code"></i> users.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="users.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> referrals.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="referrals.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> promocodes.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="promocodes.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> rewards.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="rewards.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> user_rewards.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="user_rewards.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> affiliates.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="affiliates.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> partners.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="partners.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> payments.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="payments.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> products.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="products.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> whitelist_users.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="whitelist_users.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> cards.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="cards.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> steam_discounts.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="steam_discounts.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> stores.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="stores.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+                <li>
+                    <span><i class="fas fa-file-code"></i> reseller_stores.json</span>
+                    <div class="file-actions">
+                        <button class="btn btn-sm btn-primary download-file" data-file="reseller_stores.json">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Export functionality
+            document.getElementById('export-btn').addEventListener('click', function() {
+                const dataType = document.getElementById('export-select').value;
+                const exportStatus = document.getElementById('export-status');
+                
+                fetch(`/admin/export-data?type=${dataType}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Create download link
+                            const blob = new Blob([JSON.stringify(data.data, null, 2)], { type: 'application/json' });
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${dataType}_${new Date().toISOString().split('T')[0]}.json`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            
+                            // Show success message
+                            exportStatus.textContent = `Successfully exported ${dataType} data`;
+                            exportStatus.className = 'status-message status-success';
+                            exportStatus.style.display = 'block';
+                        } else {
+                            exportStatus.textContent = `Error: ${data.message}`;
+                            exportStatus.className = 'status-message status-error';
+                            exportStatus.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        exportStatus.textContent = `Error: ${error.message}`;
+                        exportStatus.className = 'status-message status-error';
+                        exportStatus.style.display = 'block';
+                    });
+            });
+
+            // File download buttons
+            document.querySelectorAll('.download-file').forEach(button => {
+                button.addEventListener('click', function() {
+                    const filename = this.getAttribute('data-file');
+                    window.location.href = `/admin/download-file?filename=${filename}`;
+                });
+            });
+
+            // Preview functionality
+            document.getElementById('preview-btn').addEventListener('click', function() {
+                const fileInput = document.getElementById('import-file');
+                const file = fileInput.files[0];
+                
+                if (!file) {
+                    alert('Please select a file first');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        document.getElementById('json-preview').value = JSON.stringify(jsonData, null, 2);
+                        document.getElementById('preview-card').style.display = 'block';
+                        document.getElementById('confirm-import-btn').style.display = 'none';
+                    } catch (error) {
+                        alert('Invalid JSON file: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            // Import form submission
+            document.getElementById('import-form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const importStatus = document.getElementById('import-status');
+                
+                fetch('/admin/import-data', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        importStatus.textContent = `Successfully imported ${data.type} data`;
+                        importStatus.className = 'status-message status-success';
+                        importStatus.style.display = 'block';
+                        
+                        // Hide preview if visible
+                        document.getElementById('preview-card').style.display = 'none';
+                    } else {
+                        importStatus.textContent = `Error: ${data.message}`;
+                        importStatus.className = 'status-message status-error';
+                        importStatus.style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    importStatus.textContent = `Error: ${error.message}`;
+                    importStatus.className = 'status-message status-error';
+                    importStatus.style.display = 'block';
+                });
+            });
+
+            // Confirm import after preview
+            document.getElementById('confirm-import-btn').addEventListener('click', function() {
+                const fileInput = document.getElementById('import-file');
+                const file = fileInput.files[0];
+                const dataType = document.getElementById('import-select').value;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const jsonData = JSON.parse(e.target.result);
+                        
+                        fetch('/admin/import-data', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                type: dataType,
+                                data: jsonData
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            const importStatus = document.getElementById('import-status');
+                            if (data.success) {
+                                importStatus.textContent = `Successfully imported ${dataType} data`;
+                                importStatus.className = 'status-message status-success';
+                                importStatus.style.display = 'block';
+                                
+                                // Hide preview
+                                document.getElementById('preview-card').style.display = 'none';
+                            } else {
+                                importStatus.textContent = `Error: ${data.message}`;
+                                importStatus.className = 'status-message status-error';
+                                importStatus.style.display = 'block';
+                            }
+                        });
+                    } catch (error) {
+                        alert('Error processing JSON: ' + error.message);
+                    }
+                };
+                reader.readAsText(file);
+            });
+        });
+    </script>
+</body>
+</html>

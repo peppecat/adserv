@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>My Store | KEYZPANEL</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary: #FF9900;  /* Amazon orange */
+            --secondary: #232F3E;  /* Amazon dark blue */
+            --light-bg: #FFFFFF;
+            --border-color: #DDDDDD;
+            --text-dark: #131921;
+            --text-light: #565959;
+            --success: #067D62;  /* Amazon green */
+            --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        body {
+            font-family: 'Amazon Ember', Arial, sans-serif;
+            background-color: #F3F3F3;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+        
+        .navbar {
+            background-color: var(--secondary) !important;
+            padding: 0.5rem 0;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+            font-size: 1.5rem;
+        }
+        
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 4px;
+            margin: 0 0.25rem;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.active {
+            background-color: var(--primary);
+            color: #111 !important;
+        }
+        
+        /* User info styles */
+        .user-info-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            align-items: center;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 1rem;
+        }
+        
+        .user-details {
+            flex: 1;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+        
+        .user-balance {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        
+        .page-header {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 1.5rem 0;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        /* Store card styles */
+        .store-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .store-icon {
+            font-size: 3rem;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+        }
+        
+        .store-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .store-description {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: #111;
+            font-weight: 600;
+        }
+        
+        .btn-primary:hover {
+            background-color: #e68a00;
+            border-color: #e68a00;
+        }
+        
+        .price-tag {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .info-icon {
+            color: var(--text-light);
+            cursor: pointer;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .info-icon:hover .info-tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .info-tooltip {
+            visibility: hidden;
+            width: 300px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 1rem;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.9rem;
+            font-weight: normal;
+            line-height: 1.4;
+        }
+        
+        .info-tooltip:after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #333 transparent transparent transparent;
+        }
+        
+        .benefits-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        
+        .benefits-list li {
+            padding: 0.5rem 0;
+            position: relative;
+            padding-left: 1.75rem;
+        }
+        
+        .benefits-list li:before {
+            content: "\f00c";
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            color: var(--success);
+            position: absolute;
+            left: 0;
+        }
+        
+        /* Breadcrumb */
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .breadcrumb-item a {
+            color: var(--text-light);
+            text-decoration: none;
+        }
+        
+        .breadcrumb-item.active {
+            color: var(--text-dark);
+            font-weight: 500;
+        }
+        
+        /* Existing store panel */
+        .existing-store {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+        }
+        
+        .store-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-active {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-processing {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .store-url {
+            display: inline-block;
+            background-color: #f3f4f6;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 0.5rem 0;
+        }
+        
+        .collapsed-form {
+            transition: all 0.3s ease;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+        }
+        
+        .collapsed-form.show {
+            max-height: 1000px;
+            opacity: 1;
+            margin-bottom: 1.5rem;
+        }
+        
+        .admin-credentials {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .credential-item {
+            margin-bottom: 1rem;
+        }
+        
+        .credential-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.25rem;
+        }
+        
+        .credential-value {
+            background-color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        .delete-store-btn {
+            margin-top: 1.5rem;
+        }
+        
+        /* Insufficient funds modal */
+        .insufficient-funds-modal .modal-header {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        
+        .insufficient-funds-modal .modal-body {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .insufficient-funds-modal .warning-icon {
+            font-size: 4rem;
+            color: #ffc107;
+            margin-bottom: 1.5rem;
+        }
+        
+        .insufficient-funds-modal .balance-details {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .insufficient-funds-modal .balance-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        
+        .insufficient-funds-modal .balance-label {
+            font-weight: 500;
+        }
+        
+        .insufficient-funds-modal .balance-value {
+            font-weight: 600;
+        }
+        
+        .insufficient-funds-modal .required {
+            color: #dc3545;
+        }
+        
+        .insufficient-funds-modal .current {
+            color: #28a745;
+        }
+        
+        .insufficient-funds-modal .difference {
+            color: #6c757d;
+        }
+        
+        .insufficient-funds-modal .modal-footer {
+            border-top: none;
+            justify-content: center;
+            padding-top: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .navbar-toggler {
+                color: white;
+                border-color: rgba(255, 255, 255, 0.3);
+            }
+            
+            .store-card {
+                padding: 1.5rem;
+            }
+            
+            .info-tooltip {
+                width: 250px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shopping-bag me-2"></i>KEYZPANEL
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-home me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/orders">
+                            <i class="fas fa-clipboard-list me-1"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/profile">
+                            <i class="fas fa-user me-1"></i> Account
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/affilate">
+                            <i class="fas fa-store me-1"></i> My Store
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link " href="/reseller">
+                            <i class="fas fa-layer-group me-1"></i> Reseller
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container py-4">
+        <div class="row mb-3">
+            <div class="col">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="/">Home</a></li>
+                        <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                        <li class="breadcrumb-item active">My Store</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+        
+        <!-- User Info Card -->
+        <div class="user-info-card">
+            <div class="user-avatar">
+                {{ username[0].upper() }}
+            </div>
+            <div class="user-details">
+                <div class="user-name">{{ username }}</div>
+        <div class="user-balance">
+            Balance: ${{ "{:,.2f}".format(balances.get('card', 0) + balances.get('bep20', 0)) }}
+            {% if kyc_verified %}
+                <span class="badge bg-success ms-2">KYC Verified</span>
+            {% endif %}
+        </div>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="page-header">My Store</h1>
+            </div>
+        </div>
+        
+        {% if has_store %}
+        <!-- Existing Store Panel -->
+        <div class="existing-store">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 mb-0">{{ store.name }}</h2>
+                <span class="store-status {% if store_status == 'active' %}status-active{% else %}status-processing{% endif %}">
+                    {{ store_status|capitalize }}
+                </span>
+            </div>
+            
+            <div class="mb-3">
+                {% if store.status == 'active' %}
+                <p>Your store is active and ready to use.</p>
+                {% elif store.status == 'processing' %}
+                <p>Your store is being reviewed. Please wait.</p>
+                {% else %}
+                <p>Your store was rejected. Contact support.</p>
+                {% endif %}
+                <div class="store-url">https://{{ store.slug }}.com</div>
+            </div>
+            
+            {% if store_status == 'active' %}
+            <!-- Admin Credentials Section -->
+            <div class="admin-credentials">
+                <h3 class="h5 mb-3"><i class="fas fa-user-shield me-2"></i>Admin Access</h3>
+                
+                <div class="row">
+                    <div class="col-md-6 credential-item">
+                        <div class="credential-label">Admin Login</div>
+                        <div class="credential-value">
+                            {% if store.admin_username %}
+                                {{ store.admin_username }}
+                            {% else %}
+                                <span class="text-muted">Not set by admin yet</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 credential-item">
+                        <div class="credential-label">Admin Password</div>
+                        <div class="credential-value">
+                            {% if store.admin_password %}
+                                {{ store.admin_password }}
+                            {% else %}
+                                <span class="text-muted">Not set by admin yet</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Keep these credentials secure. They provide full access to your store's admin panel.
+                </div>
+            </div>
+            
+            <!-- Store Actions -->
+            <div class="text-center delete-store-btn">
+                <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="fas fa-trash-alt me-2"></i>Delete Store
+                </button>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <!-- Store Purchase Form -->
+        <div class="store-card">
+            <div class="text-center">
+                <div class="store-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <h2 class="store-title">Create Your Own Digital Store</h2>
+                <p class="store-description">
+                    Launch your branded digital products store with our franchise program. 
+                    Get access to our product catalog, payment processing, and store management tools.
+                </p>
+                <div class="price-tag">
+                    One-time fee: ${{ "%.2f"|format(franchise_cost) }}
+                    <span class="info-icon">
+                        <i class="fas fa-info-circle"></i>
+                        <span class="info-tooltip">
+                            After the initial payment, $10 will be automatically deducted from your account balance each month. 
+                            If there are insufficient funds on the payment date, your store will be temporarily disabled 
+                            until the payment is made.
+                        </span>
+                    </span>
+                </div>
+            </div>
+            
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                You don't currently have a store. Complete the form below to create your store.
+            </div>
+            
+            <form id="storeForm" method="POST" action="{{ url_for('affilate') }}">
+                <div id="formContent" class="show">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="storeName" class="form-label">Store Name</label>
+                            <input type="text" class="form-control" id="storeName" name="store_name" required>
+                            <div class="form-text">This will be your store's public name</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="storeSlug" class="form-label">Store URL</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="storeSlug" name="store_slug" required>
+                                <span class="input-group-text">.com</span>
+                            </div>
+                            <div class="form-text">This URL will be created only if it's available</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Contact Email</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ email }}" required>
+                        <div class="form-text">We will contact you at this address</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label">Payment Method</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="balance" value="balance" checked>
+                            <label class="form-check-label" for="balance">
+                                Pay from Balance (${{ "{:,.2f}".format(balances.get('card', 0) + balances.get('bep20', 0)) }} available)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5 class="mb-3">What You'll Get:</h5>
+                        <ul class="benefits-list">
+                            <li>Your own branded store with custom URL</li>
+                            <li>Access to our entire product catalog</li>
+                            <li>Telegram notifications</li>
+                            <li>Automatic order processing</li>
+                            <li>Dashboard to manage your store</li>
+                            <li>Loyalty Program (2% discount)</li>
+                            <li>Available reseller status</li>
+                            <li>24/7 customer support</li>
+                            <li>Built-in marketing system that brings up to 100 new clients every month</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#confirmModal">
+                            <i class="fas fa-shopping-cart me-2"></i>Create My Store (${{ "%.2f"|format(franchise_cost) }})
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Processing Store Panel (hidden by default) -->
+            <div id="processingPanel" class="existing-store" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4 mb-0">Your Store</h2>
+                    <span class="store-status status-processing">Processing</span>
+                </div>
+                
+                <div class="mb-3">
+                    <p>Your store is being processed. Please wait while we set up your store.</p>
+                    <div class="store-url" id="processingUrl"></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">Confirm Store Creation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You are about to create a new store with the following details:</p>
+                    <ul>
+                        <li><strong>Store Name:</strong> <span id="confirmStoreName"></span></li>
+                        <li><strong>Store URL:</strong> <span id="confirmStoreUrl"></span>.com</li>
+                        <li><strong>Payment Method:</strong> Balance (${{ "%.2f"|format(franchise_cost) }} will be deducted)</li>
+                    </ul>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        After the initial payment, $10 will be automatically deducted from your account balance each month. 
+                        If there are insufficient funds on the payment date, your store will be temporarily disabled.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="confirmCreate">Confirm & Create</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Store Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirm Store Deletion</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>You are about to permanently delete your store:</p>
+                    <ul>
+                        <li><strong>Store Name:</strong> {{ store.name }}</li>
+                        <li><strong>Store URL:</strong> {{ store.slug }}.com</li>
+                    </ul>
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        This action cannot be undone! All your store data, products and orders will be permanently deleted.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ url_for('affilate') }}" style="display: inline;">
+                        <input type="hidden" name="action" value="delete_store">
+                        <button type="submit" class="btn btn-danger">Delete Store Permanently</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insufficient Funds Modal -->
+    <div class="modal fade insufficient-funds-modal" id="insufficientFundsModal" tabindex="-1" aria-labelledby="insufficientFundsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="insufficientFundsModalLabel">Insufficient Funds</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="warning-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h5 class="mb-3">You don't have enough funds to create a store</h5>
+                    
+                    <div class="balance-details">
+                        <div class="balance-row">
+                            <span class="balance-label">Required amount:</span>
+                            <span class="balance-value required">${{ "%.2f"|format(franchise_cost) }}</span>
+                        </div>
+                        <div class="balance-row">
+                            <span class="balance-label">Your current balance:</span>
+                            <span class="balance-value current">${{ "%.2f"|format(balances.card + balances.bep20) }}</span>
+                        </div>
+                        <div class="balance-row">
+                            <span class="balance-label">Difference needed:</span>
+                            <span class="balance-value difference">${{ "%.2f"|format(franchise_cost - (balances.card + balances.bep20)) }}</span>
+                        </div>
+                    </div>
+                    
+                    <p class="mt-3">Please add funds to your account to continue.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="/profile?tab=balance" class="btn btn-primary">
+                        <i class="fas fa-money-bill-wave me-2"></i>Add Funds
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JS -->
+    <script>
+        // Store slug generation
+        document.getElementById('storeName').addEventListener('input', function() {
+            const storeName = this.value;
+            const slug = storeName.toLowerCase()
+                .replace(/\s+/g, '-')           // Replace spaces with -
+                .replace(/[^\w\-]+/g, '')       // Remove all non-word chars
+                .replace(/\-\-+/g, '-')         // Replace multiple - with single -
+                .replace(/^-+/, '')             // Trim - from start of text
+                .replace(/-+$/, '');            // Trim - from end of text
+                
+            document.getElementById('storeSlug').value = slug;
+        });
+
+        // Populate confirmation modal
+        document.getElementById('confirmModal').addEventListener('show.bs.modal', function() {
+            document.getElementById('confirmStoreName').textContent = document.getElementById('storeName').value;
+            document.getElementById('confirmStoreUrl').textContent = document.getElementById('storeSlug').value;
+        });
+
+        // Confirmation modal handling
+        document.getElementById('confirmCreate').addEventListener('click', function() {
+            // Get form values
+            const storeName = document.getElementById('storeName').value;
+            const storeSlug = document.getElementById('storeSlug').value;
+            
+            // Hide the form and show processing panel
+            document.getElementById('formContent').classList.remove('show');
+            document.getElementById('processingPanel').style.display = 'block';
+            document.getElementById('processingUrl').textContent = 'https://keyzpanel.com/store/' + storeSlug;
+            
+            // Close the modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+            modal.hide();
+            
+            // Submit the form via AJAX
+            const formData = new FormData(document.getElementById('storeForm'));
+            
+            fetch("/affilate", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update interface with new status
+                    if (data.store_status === 'processing') {
+                        document.getElementById('processingPanel').style.display = 'block';
+                        document.getElementById('processingUrl').textContent = 
+                            `https://keyzpanel.com/store/${data.store_slug}`;
+                    }
+                } else {
+                    if (data.message.includes('Insufficient balance')) {
+                        // Show modal for insufficient funds
+                        const insufficientFundsModal = new bootstrap.Modal(document.getElementById('insufficientFundsModal'));
+                        insufficientFundsModal.show();
+                        // Show the form again
+                        document.getElementById('formContent').classList.add('show');
+                        document.getElementById('processingPanel').style.display = 'none';
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Show error message to user
+                alert('An error occurred while creating your store. Please try again.');
+                // Show the form again
+                document.getElementById('formContent').classList.add('show');
+                document.getElementById('processingPanel').style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>

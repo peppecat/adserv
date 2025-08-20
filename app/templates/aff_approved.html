@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | Affiliate Partners</title>
+    <title>Admin Panel | Approved Partners</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
     <style>
         :root {
@@ -288,7 +288,20 @@
             border: 1px solid #f5c6cb;
         }
 
-        /* Responsive adjustments */
+        .form-control-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            border-radius: 0.2rem;
+            height: calc(1.5em + 0.5rem + 2px);
+            width: 120px;
+            border: 1px solid #ced4da;
+        }
+
+        .inline-form {
+            display: inline;
+        }
+
         @media (max-width: 992px) {
             .sidebar {
                 width: 70px;
@@ -315,6 +328,10 @@
         .badge-processing {
             background-color: #cce5ff;
             color: #004085;
+        }
+        .badge-declined {
+            background-color: #f8d7da;
+            color: #721c24;
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -358,11 +375,11 @@
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-section-title">Affiliate</div>
-                <a href="/aff/newpartners" class="sidebar-link active">
+                <a href="/aff/newpartners" class="sidebar-link">
                     <i class="fas fa-user-plus"></i>
                     <span>Запросы (Join US)</span>
                 </a>
-                <a href="/aff/approved" class="sidebar-link ">
+                <a href="/aff/approved" class="sidebar-link active">
                     <i class="fas fa-store"></i>
                     <span>Подтвержденные магазины</span>
                 </a>
@@ -376,14 +393,13 @@
 
     <div class="content">
         <div class="header">
-            <h1>Управление партнерами</h1>
+            <h1>Подтвержденные магазины</h1>
             <div class="user-info">
                 <div class="user-avatar">A</div>
                 <span>Администратор</span>
             </div>
         </div>
         
-        <!-- Flash-сообщения -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -396,78 +412,159 @@
         
         <div class="card">
             <div class="card-header">
-                <h2>Запросы на партнерство</h2>
+                <h2>Активные партнерские магазины</h2>
             </div>
             <div class="table-responsive">
-<table>
-    <thead>
-        <tr>
-            <th>Пользователь</th>
-            <th>Email</th>
-            <th>Название магазина</th>
-            <th>URL магазина</th>
-            <th>Способ оплаты</th>
-            <th>Статус</th>
-            <th>Действия</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for partner in partners %}
-            <tr>
-                <td>{{ partner.username }}</td>
-                <td>{{ partner.email }}</td>
-                <td>{{ partner.store_name }}</td>
-                <td>{{ partner.store_slug }}.com</td>
-                <td>{{ partner.payment_method|capitalize }}</td>
-                <td>
-                    <span class="badge 
-                        {% if partner.status == 'active' %}badge-active
-                        {% elif partner.status == 'processing' %}badge-warning
-                        {% else %}badge-pending{% endif %}">
-                        {{ partner.status|capitalize }}
-                    </span>
-                </td>
-                <td>
-                    <div class="action-buttons">
-                        {% if partner.status == 'processing' %}
-                        <form method="POST" action="{{ url_for('aff_partners') }}" style="display: inline;">
-                            <input type="hidden" name="action" value="approve">
-                            <input type="hidden" name="username" value="{{ partner.username }}">
-                            <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Подтвердить магазин?')">
-                                <i class="fas fa-check"></i>
-                            </button>
-                        </form>
-                        <form method="POST" action="{{ url_for('aff_partners') }}" style="display: inline;">
-                            <input type="hidden" name="action" value="reject">
-                            <input type="hidden" name="username" value="{{ partner.username }}">
-                            <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Отклонить магазин?')">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </form>
-                        {% endif %}
-                        <form method="POST" action="{{ url_for('aff_partners') }}" style="display: inline;">
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="username" value="{{ partner.username }}">
-                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Удалить магазин?')">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="7" style="text-align: center;">Нет магазинов на модерации</td>
-            </tr>
-        {% endfor %}
-    </tbody>
-</table>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Пользователь</th>
+                            <th>Email</th>
+                            <th>Название магазина</th>
+                            <th>URL магазина</th>
+                            <th>Логин</th>
+                            <th>Пароль</th>
+                            <th>Дата создания</th>
+                            <th>Статус</th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for partner in partners %}
+                            <tr>
+                                <td>{{ partner.username }}</td>
+                                <td>{{ partner.email }}</td>
+                                <td>{{ partner.store_name }}</td>
+                                <td>{{ partner.store_slug }}.com</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('aff_approved') }}" class="inline-form">
+                                        <input type="hidden" name="action" value="update_credentials">
+                                        <input type="hidden" name="username" value="{{ partner.username }}">
+                                        <input type="text" name="admin_username" value="{{ partner.admin_username }}" class="form-control-sm">
+                                </td>
+                                <td>
+                                        <input type="text" name="admin_password" value="{{ partner.admin_password }}" class="form-control-sm">
+                                </td>
+                                <td>{{ partner.created_at }}</td>
+                                <td>
+                                    <span class="badge badge-active">
+                                        {{ partner.status|capitalize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-save"></i> Сохранить
+                                        </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('aff_approved') }}" style="display: inline;">
+                                            <input type="hidden" name="action" value="deactivate">
+                                            <input type="hidden" name="username" value="{{ partner.username }}">
+                                            <button type="submit" class="btn btn-warning btn-sm" onclick="return confirm('Деактивировать магазин?')">
+                                                <i class="fas fa-power-off"></i>
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('aff_approved') }}" style="display: inline;">
+                                            <input type="hidden" name="action" value="delete">
+                                            <input type="hidden" name="username" value="{{ partner.username }}">
+                                            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Удалить магазин?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <!-- Строка с реселлерскими магазинами -->
+                            <tr>
+                                <td colspan="9">
+                                    <details style="margin-top: 15px; background: #f9f9f9; border-radius: 8px; padding: 10px;">
+                                        <summary style="cursor: pointer; font-weight: bold; padding: 10px;">
+                                            Reseller Stores ({{ partner.reseller_stores|length }})
+                                        </summary>
+                                        
+                                        <table style="width: 100%; margin-top: 10px; background: white;">
+                                            <thead>
+                                                <tr>
+                                                    <th>Название магазина</th>
+                                                    <th>URL магазина</th>
+                                                    <th>Логин</th>
+                                                    <th>Пароль</th>
+                                                    <th>Дата создания</th>
+                                                    <th>Статус</th>
+                                                    <th>Действия</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for reseller in partner.reseller_stores %}
+<tr>
+    <td>{{ reseller.name }}</td>
+    <td>{{ reseller.slug }}.com</td>
+    <td>
+        <form method="POST" action="{{ url_for('aff_approved') }}" class="inline-form">
+            <input type="hidden" name="action" value="update_reseller_credentials">
+            <!-- Используем slug вместо id -->
+            <input type="hidden" name="reseller_id" value="{{ reseller.slug }}">
+            <input type="text" name="admin_username" value="{{ reseller.admin_username }}" class="form-control-sm">
+    </td>
+    <td>
+            <input type="text" name="admin_password" value="{{ reseller.admin_password }}" class="form-control-sm">
+    </td>
+    <td>{{ reseller.created_at }}</td>
+    <td>
+        <span class="badge {% if reseller.status == 'active' %}badge-active{% elif reseller.status == 'processing' %}badge-processing{% elif reseller.status == 'declined' %}badge-declined{% endif %}">
+            {{ reseller.status|capitalize }}
+        </span>
+    </td>
+    <td>
+        <div class="action-buttons">
+            <button type="submit" class="btn btn-success btn-sm">
+                <i class="fas fa-save"></i>
+            </button>
+            </form>
+<form method="POST" action="{{ url_for('aff_approved') }}" style="display: inline;">
+    <input type="hidden" name="action" value="update_reseller_status">
+    <input type="hidden" name="reseller_id" value="{{ reseller.slug }}">
+    <select name="new_status" class="form-control-sm" onchange="this.form.submit()">
+        <option value="processing" {% if reseller.status == 'processing' %}selected{% endif %}>Processing</option>
+        <option value="active" {% if reseller.status == 'active' %}selected{% endif %}>Active</option>
+        <option value="declined" {% if reseller.status == 'declined' %}selected{% endif %}>Declined</option>
+    </select>
+    <noscript>
+        <button type="submit" class="btn btn-primary btn-sm">
+            <i class="fas fa-sync"></i>
+        </button>
+    </noscript>
+</form>
+            <form method="POST" action="{{ url_for('aff_approved') }}" style="display: inline;">
+                <input type="hidden" name="action" value="delete_reseller">
+                <!-- Используем slug вместо id -->
+                <input type="hidden" name="reseller_id" value="{{ reseller.slug }}">
+                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Удалить этот реселлерский магазин?')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </form>
+        </div>
+    </td>
+</tr>
+{% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </details>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="9" style="text-align: center;">Нет подтвержденных магазинов</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
     
     <script>
-        // Автоматическое скрытие flash-сообщений через 5 секунд
         setTimeout(function() {
             var alerts = document.querySelectorAll('.alert');
             alerts.forEach(function(alert) {

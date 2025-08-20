@@ -3,82 +3,362 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bep20</title>
-    <link rel="stylesheet" href="/main_style.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='main_style.css') }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}"> <!-- FAVICON -->
+    <title>USDT (BEP20) Payment | KEYZPANEL</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary: #FF9900;  /* Amazon orange */
+            --secondary: #232F3E;  /* Amazon dark blue */
+            --light-bg: #FFFFFF;
+            --border-color: #DDDDDD;
+            --text-dark: #131921;
+            --text-light: #565959;
+            --success: #067D62;  /* Amazon green */
+            --card-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+        }
+        
+        body {
+            font-family: 'Amazon Ember', Arial, sans-serif;
+            background-color: #F3F3F3;
+            color: var(--text-dark);
+            line-height: 1.5;
+        }
+        
+        .navbar {
+            background-color: var(--secondary) !important;
+            padding: 0.5rem 0;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+            font-size: 1.5rem;
+        }
+        
+        .nav-link {
+            color: white !important;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            border-radius: 4px;
+            margin: 0 0.25rem;
+        }
+        
+        .nav-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-link.active {
+            background-color: var(--primary);
+            color: #111 !important;
+        }
+        
+        .payment-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            padding: 2rem;
+        }
+        
+        .payment-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .payment-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
+        }
+        
+        .payment-subtitle {
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+        
+        .payment-method {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .payment-method img {
+            width: 40px;
+            height: 40px;
+            margin-right: 1rem;
+        }
+        
+        .payment-method-text {
+            font-weight: 500;
+        }
+        
+        .payment-method-text span {
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+        
+        .payment-details {
+            margin-bottom: 1.5rem;
+        }
+        
+        .payment-field {
+            margin-bottom: 1.25rem;
+        }
+        
+        .payment-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .payment-value {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            font-family: monospace;
+            position: relative;
+        }
+        
+        .payment-value img {
+            width: 24px;
+            height: 24px;
+            margin-right: 0.75rem;
+        }
+        
+        .copy-btn {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .copy-btn:hover {
+            color: #e68a00;
+        }
+        
+        .copy-btn i {
+            margin-right: 0.25rem;
+        }
+        
+        .timer-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .timer-text {
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+        
+        .timer {
+            font-weight: 600;
+            color: var(--primary);
+            font-size: 1.25rem;
+        }
+        
+        .confirm-btn {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--primary);
+            border: none;
+            border-radius: 6px;
+            color: #111;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .confirm-btn:hover {
+            background-color: #e68a00;
+        }
+        
+        .alert-note {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #fff3cd;
+            border-radius: 6px;
+            color: #856404;
+            font-size: 0.9rem;
+        }
+        
+        .alert-note i {
+            margin-right: 0.5rem;
+            color: #ffc107;
+        }
+        
+        @media (max-width: 768px) {
+            .payment-container {
+                padding: 1.5rem;
+            }
+            
+            .payment-title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="crypto-pay-adress">
-        <div class="main-block-1">
-            <div class="main-block-content">
-                <div class="process-page">
-                    <h1 class="crypto-adressTitle">Payment details</h1>
-                    <div class="crypto-form-fs">
-                        <div class="crypto-payment-info-cont">
-                            <div class="crypto-pay-currency">
-                                <img src="https://www.svgrepo.com/show/367256/usdt.svg" alt="">
-                                <div class="flex-cont-2">
-                                    Pay with
-                                    <span class="black-text">USDT (BEP20)</span>
-                                </div>
-                            </div>
-                            <div class="crypto-payment-cont">
-                                <div class="crypto-form-cont">
-                                    <div class="crypto-form-cont-label">We must receive Amount:</div>
-                                    <div class="rounded-grey-rect">
-                                        <img src="https://www.svgrepo.com/show/367256/usdt.svg" alt="">
-                                        <span>
-                                            <span class="to-copy">{{ amount }}</span>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-shopping-bag me-2"></i>KEYZPANEL
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarContent">
+                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">
+                            <i class="fas fa-home me-1"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/orders">
+                            <i class="fas fa-clipboard-list me-1"></i> Orders
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/profile">
+                            <i class="fas fa-user me-1"></i> Account
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/affilate">
+                            <i class="fas fa-store me-1"></i> My Store
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/reseller">
+                            <i class="fas fa-layer-group me-1"></i> Reseller
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">
+                            <i class="fas fa-sign-out-alt me-1"></i> Logout
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-                                            <span class="curr">USD</span>
-                                        </span>
-                                        <span class="btn-copy"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-files" viewBox="0 0 16 16"><path d="M13.54,0H4.92A2.27,2.27,0,0,0,2.46,2,2.27,2.27,0,0,0,0,4V14a2.27,2.27,0,0,0,2.46,2h8.62a2.27,2.27,0,0,0,2.46-2A2.27,2.27,0,0,0,16,12V2A2.27,2.27,0,0,0,13.54,0Zm0,13V4a2.27,2.27,0,0,0-2.46-2H3.69A1.13,1.13,0,0,1,4.92,1h8.62a1.13,1.13,0,0,1,1.23,1V12A1.13,1.13,0,0,1,13.54,13ZM1.23,4A1.13,1.13,0,0,1,2.46,3h8.62a1.13,1.13,0,0,1,1.23,1V14a1.13,1.13,0,0,1-1.23,1H2.46a1.13,1.13,0,0,1-1.23-1Z"></path></svg></span>
-                                    </div>
-                                </div>
-                                <div class="crypto-form-cont">
-                                    <div class="crypto-form-cont-label">USDT (BEP20) address:</div>
-                                    <div class="rounded-grey-rect">
-                                        <img src="https://www.svgrepo.com/show/367256/usdt.svg" alt="">
-                                        <span>
-                                            <span class="to-copy adress-to-copy">{{ bep20_address }}</span>
-                                        </span>
-                                        <span class="btn-copy">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-files" viewBox="0 0 16 16">
-                                                <path d="M13.54,0H4.92A2.27,2.27,0,0,0,2.46,2,2.27,2.27,0,0,0,0,4V14a2.27,2.27,0,0,0,2.46,2h8.62a2.27,2.27,0,0,0,2.46-2A2.27,2.27,0,0,0,16,12V2A2.27,2.27,0,0,0,13.54,0Zm0,13V4a2.27,2.27,0,0,0-2.46-2H3.69A1.13,1.13,0,0,1,4.92,1h8.62a1.13,1.13,0,0,1,1.23,1V12A1.13,1.13,0,0,1,13.54,13ZM1.23,4A1.13,1.13,0,0,1,2.46,3h8.62a1.13,1.13,0,0,1,1.23,1V14a1.13,1.13,0,0,1-1.23,1H2.46a1.13,1.13,0,0,1-1.23-1Z"></path>
-                                            </svg>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="crypto-form-cont">
-                                    <div class="crypto-form-cont-label">Network:</div>
-                                    <div class="rounded-grey-rect crypto-network-2">
-                                        <span>BSC (BEP20)</span>
-                                    </div>
-                                </div>
-                                <div class="crypto-status-cont">
-                                    Payment page will expire in
-                                    <div class="time-circle-wrap">            
-                                        <span class="minutes-text black-text" id="minutes">10</span>:
-                                        <span class="seconds-text black-text" id="seconds">00</span>
-                                    </div>
-                                    <span class="black-text">Once payment sent Confirm</span>
-                                </div>
-                                <div class="crypto-buttons-cont">
-                                    <button class="btn-red">Confirm</button>
-                                </div>
-                            </div>
-                        </div>
+    <div class="container py-4">
+        <div class="payment-container">
+            <div class="payment-header">
+                <h1 class="payment-title">Payment Details</h1>
+                <p class="payment-subtitle">Complete your payment using USDT (BEP20)</p>
+            </div>
+            
+            <div class="payment-method">
+                <img src="https://www.svgrepo.com/show/367256/usdt.svg" alt="USDT">
+                <div class="payment-method-text">
+                    Pay with <span>USDT (BEP20)</span>
+                </div>
+            </div>
+            
+            <div class="payment-details">
+                <div class="payment-field">
+                    <label class="payment-label">Amount to Pay:</label>
+                    <div class="payment-value">
+                        <img src="https://www.svgrepo.com/show/367256/usdt.svg" alt="USDT">
+                        <span class="to-copy">{{ amount }}</span> USD
+                        <button class="copy-btn" onclick="copyToClipboard('amount')">
+                            <i class="far fa-copy"></i> Copy
+                        </button>
                     </div>
                 </div>
+                
+                <div class="payment-field">
+                    <label class="payment-label">Recipient Address:</label>
+                    <div class="payment-value">
+                        <img src="https://www.svgrepo.com/show/367256/usdt.svg" alt="USDT">
+                        <span class="to-copy adress-to-copy">{{ bep20_address }}</span>
+                        <button class="copy-btn" onclick="copyToClipboard('address')">
+                            <i class="far fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="payment-field">
+                    <label class="payment-label">Network:</label>
+                    <div class="payment-value">
+                        <span>BSC (BEP20)</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timer-container">
+                <span class="timer-text">Payment page expires in:</span>
+                <span class="timer" id="minutes">10</span>:<span class="timer" id="seconds">00</span>
+            </div>
+            
+            <button class="confirm-btn" id="confirmPayment">
+                <i class="fas fa-check-circle me-2"></i> Confirm Payment
+            </button>
+            
+            <div class="alert-note">
+                <i class="fas fa-exclamation-circle"></i>
+                Please send the exact amount to the address above. Once sent, click "Confirm Payment" to verify your transaction.
             </div>
         </div>
     </div>
 
-    <script src="/js/main.js"></script>
-    <script src="{{ url_for('static', filename='main.js') }}"></script>
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
+        // Timer functionality
+        function startTimer(duration, displayMinutes, displaySeconds) {
+            let timer = duration, minutes, seconds;
+            const interval = setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                displayMinutes.textContent = minutes;
+                displaySeconds.textContent = seconds;
+
+                if (--timer < 0) {
+                    clearInterval(interval);
+                    // Redirect or show expired message
+                }
+            }, 1000);
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            // Start 10 minute timer
+            const minutesDisplay = document.querySelector('#minutes');
+            const secondsDisplay = document.querySelector('#seconds');
+            startTimer(600, minutesDisplay, secondsDisplay);
+            
+            // Extract amount from URL
             const urlParams = new URLSearchParams(window.location.search);
             const amount = urlParams.get('amount');
             if (amount) {
@@ -87,21 +367,26 @@
                     amountElement.textContent = parseFloat(amount).toFixed(2);
                 }
             }
-        });
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const amount = urlParams.get('amount');
-    
-            if (amount) {
-                const amountElement = document.querySelector('.to-copy');
-                if (amountElement) {
-                    amountElement.textContent = parseFloat(amount).toFixed(2);
+            
+            // Copy to clipboard function
+            window.copyToClipboard = function(type) {
+                let textToCopy;
+                if (type === 'amount') {
+                    textToCopy = document.querySelector('.to-copy').textContent;
+                } else {
+                    textToCopy = document.querySelector('.adress-to-copy').textContent;
                 }
-            }
-    
-            document.querySelector('.btn-red').addEventListener('click', function() {
+                
+                navigator.clipboard.writeText(textToCopy).then(function() {
+                    // Show copied notification
+                    alert('Copied to clipboard!');
+                }, function(err) {
+                    console.error('Could not copy text: ', err);
+                });
+            };
+            
+            // Confirm payment button
+            document.getElementById('confirmPayment').addEventListener('click', function() {
                 fetch("{{ url_for('bep20_success') }}?amount=" + amount, {
                     method: "GET"
                 })
@@ -109,15 +394,14 @@
                     if (response.ok) {
                         window.location.href = "{{ url_for('bep20_success') }}?amount=" + amount;
                     } else {
-                        alert("Ошибка при обработке платежа");
+                        alert("Error processing payment");
                     }
                 })
                 .catch(error => {
-                    console.error("Ошибка запроса:", error);
+                    console.error("Request error:", error);
                 });
             });
         });
     </script>
-    
 </body>
 </html>

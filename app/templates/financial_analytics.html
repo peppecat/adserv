@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | Financial Analytics</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
+    <style>
+        :root {
+            --primary-color: #4a6bff;
+            --secondary-color: #f8f9fa;
+            --accent-color: #6c757d;
+            --text-color: #343a40;
+            --light-text: #f8f9fa;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, #2c3e50, #4a6bff);
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        .sidebar-header {
+            color: var(--light-text);
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h2 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .sidebar-nav {
+            flex-grow: 1;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-section-title {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            padding: 0 20px;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            color: var(--light-text);
+            text-decoration: none;
+            padding: 12px 20px;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-left-color: var(--light-text);
+        }
+
+        .sidebar-link i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-link.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-left-color: var(--light-text);
+            font-weight: 500;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .card-header h2 {
+            font-size: 1.3rem;
+            color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .btn {
+            display: inline-block;
+            font-weight: 400;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: middle;
+            user-select: none;
+            border: 1px solid transparent;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            border-radius: 0.25rem;
+            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #3a5bef;
+            border-color: #3a5bef;
+        }
+
+        /* Стили для аккордеона по месяцам */
+        .monthly-accordion {
+            margin-top: 20px;
+        }
+
+        .monthly-item {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .monthly-header {
+            padding: 15px;
+            background-color: #f8f9fa;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .monthly-header:hover {
+            background-color: #e9ecef;
+        }
+
+        .monthly-header .month-title {
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+
+        .monthly-header .month-revenue {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .monthly-content {
+            padding: 0;
+            background-color: white;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .monthly-content.active {
+            max-height: 500px;
+            padding: 15px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 10px;
+        }
+
+        .stat-card {
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            background-color: white;
+            box-shadow: var(--box-shadow);
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--accent-color);
+            font-size: 0.9rem;
+        }
+
+        /* Общие стили для таблиц */
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 500;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Стили для уведомлений */
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Адаптивные стили */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                overflow: hidden;
+            }
+            .sidebar-section-title, .sidebar-link span {
+                display: none;
+            }
+            .sidebar-link {
+                justify-content: center;
+                padding: 12px 0;
+            }
+            .sidebar-link i {
+                margin-right: 0;
+                font-size: 1.3rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                padding: 15px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Admin Panel</h2>
+        </div>
+        <div class="sidebar-nav">
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Main</div>
+                <a href="/admin/users" class="sidebar-link">
+                    <i class="fas fa-users"></i>
+                    <span>Пользователи</span>
+                </a>
+                <a href="/admin/orders" class="sidebar-link">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Заказы</span>
+                </a>
+                <a href="/admin/whitelist" class="sidebar-link">
+                    <i class="fas fa-list-check"></i>
+                    <span>Whitelist</span>
+                </a>
+                <a href="/admin/payments" class="sidebar-link">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <span>Платежи</span>
+                </a>
+                <a href="/admin/financial-analytics" class="sidebar-link active">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Финансовая аналитика</span>
+                </a>
+                <a href="/admin/steam-settings" class="sidebar-link">
+                    <i class="fas fa-cog"></i>
+                    <span>Steam Settings</span>
+                </a>
+                <a href="/admin/telegram-settings" class="sidebar-link">
+                    <i class="fas fa-paper-plane"></i>
+                    <span>Уведомления Telegram</span>
+                </a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-section-title">Affiliate</div>
+                <a href="/aff/newpartners" class="sidebar-link">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Запросы (Join US)</span>
+                </a>
+                <a href="/aff/approved" class="sidebar-link">
+                    <i class="fas fa-store"></i>
+                    <span>Подтвержденные магазины</span>
+                </a>
+            </div>
+        </div>
+        <a href="/" class="sidebar-link" style="margin-top: auto;">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Выйти</span>
+        </a>
+    </div>
+
+    <div class="content">
+        <div class="header">
+            <h1>Финансовая аналитика</h1>
+            <div class="user-info">
+                <div class="user-avatar">A</div>
+                <span>Администратор</span>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'success' %}success{% else %}error{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Настройки ценообразования</h2>
+            </div>
+            <form method="POST" action="{{ url_for('financial_analytics') }}">
+                <div class="form-group">
+                    <label for="store_price" class="form-label">Цена за основной магазин ($):</label>
+                    <input type="number" step="0.01" class="form-control" id="store_price" name="store_price" value="{{ store_price }}">
+                </div>
+                <div class="form-group">
+                    <label for="reseller_price" class="form-label">Цена за реселлерский магазин ($):</label>
+                    <input type="number" step="0.01" class="form-control" id="reseller_price" name="reseller_price" value="{{ reseller_price }}">
+                </div>
+                <div class="form-group">
+                    <label for="monthly_fee" class="form-label">Ежемесячная плата за обслуживание ($):</label>
+                    <input type="number" step="0.01" class="form-control" id="monthly_fee" name="monthly_fee" value="{{ monthly_fee }}">
+                </div>
+                <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+            </form>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Общая статистика</h2>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">{{ total_stores }}</div>
+                    <div class="stat-label">Всего магазинов</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ total_resellers }}</div>
+                    <div class="stat-label">Всего реселлеров</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${{ "%.2f"|format(initial_revenue) }}</div>
+                    <div class="stat-label">Начальный доход</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${{ "%.2f"|format(monthly_recurring) }}</div>
+                    <div class="stat-label">Ежемесячный доход</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${{ "%.2f"|format(annual_recurring) }}</div>
+                    <div class="stat-label">Годовой доход</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${{ "%.2f"|format(total_potential) }}</div>
+                    <div class="stat-label">Общий потенциал</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Статистика по месяцам</h2>
+            </div>
+            <div class="monthly-accordion">
+                {% for month in monthly_data %}
+                <div class="monthly-item">
+                    <div class="monthly-header" onclick="toggleMonth('{{ month.year }}-{{ month.month }}')">
+                        <span class="month-title">{{ month.month_name }} {{ month.year }}</span>
+                        <span class="month-revenue">${{ "%.2f"|format(month.total_revenue) }}</span>
+                    </div>
+                    <div class="monthly-content" id="content-{{ month.year }}-{{ month.month }}">
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">{{ month.stores_count }}</div>
+                                <div class="stat-label">Основных магазинов</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${{ "%.2f"|format(month.stores_revenue) }}</div>
+                                <div class="stat-label">Доход от магазинов</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">{{ month.resellers_count }}</div>
+                                <div class="stat-label">Реселлеров</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${{ "%.2f"|format(month.resellers_revenue) }}</div>
+                                <div class="stat-label">Доход от реселлеров</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Методы оплаты</h2>
+            </div>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Метод оплаты</th>
+                            <th>Количество</th>
+                            <th>Процент</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for method, count in payment_methods.items() %}
+                        <tr>
+                            <td>{{ method|capitalize }}</td>
+                            <td>{{ count }}</td>
+                            <td>{{ "%.1f"|format(count / total_stores * 100) if total_stores > 0 else 0 }}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Функция для переключения отображения месяца
+        function toggleMonth(monthId) {
+            const content = document.getElementById(`content-${monthId}`);
+            content.classList.toggle('active');
+            
+            // Закрываем все другие открытые месяцы
+            document.querySelectorAll('.monthly-content').forEach(item => {
+                if (item.id !== `content-${monthId}` && item.classList.contains('active')) {
+                    item.classList.remove('active');
+                }
+            });
+        }
+        
+        // Автоматически открываем первый месяц при загрузке
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstMonth = document.querySelector('.monthly-content');
+            if (firstMonth) {
+                firstMonth.classList.add('active');
+            }
+        });
+        
+        // Автоматическое скрытие уведомлений через 5 секунд
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(function() {
+                    alert.remove();
+                }, 500);
+            });
+        }, 5000);
+    </script>
+</body>
+</html>

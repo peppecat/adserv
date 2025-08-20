@@ -1,10 +1,13 @@
 import json
+import os
 import uuid  # импортируем отдельно
 import sys
 import requests
 sys.stdout.reconfigure(encoding='utf-8')
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, abort,send_file
 from datetime import datetime
+from functools import wraps
+from werkzeug.utils import secure_filename
 
 
 app = Flask(__name__, template_folder='app/templates', static_folder='app/static')
@@ -16,6 +19,11 @@ TELEGRAM_BOT_TOKEN = '7726856877:AAFIslzTXmB5FCw2zDHuPswiybUaCGxiNSw'
 TELEGRAM_CHAT_ID = '2045150846'
 
 def send_telegram_notification(username, message_type, amount=None, payment_method=None, order_data=None):
+    # Проверяем, что настройки Telegram существуют
+    if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
+        print("Telegram notifications are not configured")
+        return None
+
     messages = {
         'registration': f"🆕 Новый пользователь зарегистрирован!\nUsername: {username}",
         'payment': f"💳 Новое пополнение баланса!\n\n"
@@ -50,9 +58,23 @@ def send_telegram_notification(username, message_type, amount=None, payment_meth
 
 
 
+DEFAULT_STEAM_SETTINGS = {
+    'base_fee': 10,  # 10% базовая комиссия
+    'discount_levels': [
+        (0, 0),     # 0% - базовый уровень
+        (50, 2),    # 2% - 50 на балансе
+        (500, 20),  # 20% - 500 на балансе
+        (1000, 25), # 25% - 1k на балансе
+        (2000, 30), # 30% - 2k на балансе
+        (4000, 35)  # 35% - 4k на балансе
+    ]
+}
 
 
 
+global steam_discount_levels, steam_base_fee
+steam_discount_levels = DEFAULT_STEAM_SETTINGS['discount_levels']
+steam_base_fee = DEFAULT_STEAM_SETTINGS['base_fee']
 
 
 # Пути к файлам для хранения данных
@@ -67,12 +89,17 @@ PAYMENTS_FILE = 'payments.json'
 PRODUCTS_FILE = 'products.json'
 CARDS_FILE = 'cards.json'
 WHITELIST_FILE = 'whitelist_users.json'
+STEAM_DISCOUNTS_FILE = 'steam_discounts.json'
+STORES_FILE = 'stores.json'
+RESELLER_FILE = 'reseller_stores.json'
+
 
 # Загрузка данных из файлов
 def load_data():
     global users, referrals, promocodes, rewards, user_rewards
     global affiliate_users, partners_data, affiliate_payments, products, cards, whitelist_users
-    global active_bonuses
+    global active_bonuses, steam_discount_levels, steam_base_fee, stores, reseller_stores
+    global TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID  # Добавляем глобальные переменные для Telegra
 
     try:
         with open(USERS_FILE, 'r') as f:
@@ -81,10 +108,38 @@ def load_data():
         users = {}
 
     try:
+        with open(RESELLER_FILE, 'r') as f:
+            reseller_stores = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        reseller_stores = []
+
+    try:
+        with open(STEAM_DISCOUNTS_FILE, 'r') as f:
+            steam_settings = json.load(f)
+            # Проверяем тип данных - если это список, преобразуем в новый формат
+            if isinstance(steam_settings, list):
+                steam_settings = {
+                    'base_fee': 10,
+                    'discount_levels': steam_settings
+                }
+            steam_discount_levels = steam_settings.get('discount_levels', [])
+            steam_base_fee = steam_settings.get('base_fee', 10)  # 10% по умолчанию
+    except FileNotFoundError:
+        steam_settings = DEFAULT_STEAM_SETTINGS
+        steam_discount_levels = steam_settings['discount_levels']
+        steam_base_fee = steam_settings['base_fee']
+
+    try:
         with open(REFERRALS_FILE, 'r') as f:
             referrals = json.load(f)
     except FileNotFoundError:
         referrals = {}
+
+    try:
+        with open(STORES_FILE, 'r') as f:
+            stores = json.load(f)
+    except FileNotFoundError:
+        stores = {}
 
     try:
         with open(PROMOCODES_FILE, 'r') as f:
@@ -147,6 +202,14 @@ def load_data():
             whitelist_users = json.load(f)
     except FileNotFoundError:
         whitelist_users = []
+    try:
+        with open('telegram_settings.json', 'r') as f:
+            telegram_settings = json.load(f)
+        TELEGRAM_BOT_TOKEN = telegram_settings.get('bot_token', '')
+        TELEGRAM_CHAT_ID = telegram_settings.get('chat_id', '')
+    except FileNotFoundError:
+        TELEGRAM_BOT_TOKEN = '7726856877:AAFIslzTXmB5FCw2zDHuPswiybUaCGxiNSw'  # дефолтные значения
+        TELEGRAM_CHAT_ID = '2045150846'
 
     active_bonuses = []  # Список активных бонусов
 
@@ -174,6 +237,272 @@ def save_data():
         json.dump(cards, f, indent=4)
     with open(WHITELIST_FILE, 'w') as f:
         json.dump(whitelist_users, f, indent=4)
+    with open(STEAM_DISCOUNTS_FILE, 'w') as f:
+        json.dump({
+            'base_fee': steam_base_fee,
+            'discount_levels': steam_discount_levels
+        }, f, indent=4)
+    with open(STORES_FILE, 'w') as f:
+        json.dump(stores, f, indent=4)
+    with open(RESELLER_FILE, 'w') as f:
+        json.dump(reseller_stores, f, indent=4)
+
+
+def check_blocked(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' in session:
+            username = session['username']
+            load_data()  # Загружаем актуальные данные
+            if username in users and users[username].get('is_banned', False):
+                return render_template('blocked_account.html', username=username)  
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+
+@app.route('/admin/data-management')
+def data_management():
+    if 'username' not in session or session['username'] != 'Dim4ikgoo$e101$':
+        return "Доступ запрещён", 403
+    return render_template('admin_data_management.html')
+
+@app.route('/admin/export-data')
+def export_data():
+    if 'username' not in session or session['username'] != 'Dim4ikgoo$e101$':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    data_type = request.args.get('type', 'all')
+    
+    try:
+        if data_type == 'users':
+            data = users
+        elif data_type == 'orders':
+            data = {}
+            for user, user_data in users.items():
+                if 'orders' in user_data:
+                    data[user] = user_data['orders']
+        elif data_type == 'payments':
+            data = affiliate_payments
+        elif data_type == 'whitelist':
+            data = whitelist_users
+        elif data_type == 'products':
+            data = products
+        elif data_type == 'referrals':
+            data = referrals
+        elif data_type == 'promocodes':
+            data = promocodes
+        elif data_type == 'affiliates':
+            data = affiliate_users
+        elif data_type == 'partners':
+            data = partners_data
+        elif data_type == 'rewards':
+            data = rewards
+        elif data_type == 'user_rewards':
+            data = user_rewards
+        elif data_type == 'cards':
+            data = cards
+        elif data_type == 'steam_discounts':
+            data = {
+                'base_fee': steam_base_fee,
+                'discount_levels': steam_discount_levels
+            }
+        elif data_type == 'stores':
+            data = stores
+        elif data_type == 'reseller_stores':
+            data = reseller_stores
+        elif data_type == 'all':
+            data = {
+                'users': users,
+                'referrals': referrals,
+                'promocodes': promocodes,
+                'affiliates': affiliate_users,
+                'partners': partners_data,
+                'payments': affiliate_payments,
+                'products': products,
+                'whitelist': whitelist_users,
+                'rewards': rewards,
+                'user_rewards': user_rewards,
+                'cards': cards,
+                'steam_discounts': {
+                    'base_fee': steam_base_fee,
+                    'discount_levels': steam_discount_levels
+                },
+                'stores': stores,
+                'reseller_stores': reseller_stores
+            }
+        else:
+            return jsonify({'success': False, 'message': 'Invalid data type'}), 400
+        
+        return jsonify({'success': True, 'data': data, 'type': data_type})
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/admin/import-data', methods=['POST'])
+def import_data():
+    if 'username' not in session or session['username'] != 'Dim4ikgoo$e101$':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    # Объявляем все глобальные переменные
+    global users, referrals, promocodes, affiliate_users, partners_data, affiliate_payments
+    global products, whitelist_users, rewards, user_rewards, cards, steam_base_fee, steam_discount_levels
+    global stores, reseller_stores
+    
+    try:
+        # Проверяем, загружен ли файл
+        if 'file' in request.files:
+            file = request.files['file']
+            if file.filename == '':
+                return jsonify({'success': False, 'message': 'No file selected'}), 400
+            
+            if file and file.filename.endswith('.json'):
+                filename = secure_filename(file.filename)
+                data_type = request.form.get('data_type', 'all')
+                
+                # Читаем и парсим JSON
+                json_data = json.load(file)
+                
+                # Обрабатываем импорт в зависимости от типа данных
+                if data_type == 'users':
+                    users = json_data
+                elif data_type == 'orders':
+                    for user, orders in json_data.items():
+                        if user in users:
+                            users[user]['orders'] = orders
+                elif data_type == 'payments':
+                    affiliate_payments = json_data
+                elif data_type == 'whitelist':
+                    whitelist_users = json_data
+                elif data_type == 'products':
+                    products = json_data
+                elif data_type == 'referrals':
+                    referrals = json_data
+                elif data_type == 'promocodes':
+                    promocodes = json_data
+                elif data_type == 'affiliates':
+                    affiliate_users = json_data
+                elif data_type == 'partners':
+                    partners_data = json_data
+                elif data_type == 'rewards':
+                    rewards = json_data
+                elif data_type == 'user_rewards':
+                    user_rewards = json_data
+                elif data_type == 'cards':
+                    cards = json_data
+                elif data_type == 'steam_discounts':
+                    steam_base_fee = json_data.get('base_fee', 10)
+                    steam_discount_levels = json_data.get('discount_levels', [])
+                elif data_type == 'stores':
+                    stores = json_data
+                elif data_type == 'reseller_stores':
+                    reseller_stores = json_data
+                elif data_type == 'all':
+                    users = json_data.get('users', users)
+                    referrals = json_data.get('referrals', referrals)
+                    promocodes = json_data.get('promocodes', promocodes)
+                    affiliate_users = json_data.get('affiliates', affiliate_users)
+                    partners_data = json_data.get('partners', partners_data)
+                    affiliate_payments = json_data.get('payments', affiliate_payments)
+                    products = json_data.get('products', products)
+                    whitelist_users = json_data.get('whitelist', whitelist_users)
+                    rewards = json_data.get('rewards', rewards)
+                    user_rewards = json_data.get('user_rewards', user_rewards)
+                    cards = json_data.get('cards', cards)
+                    steam_settings = json_data.get('steam_discounts', {})
+                    steam_base_fee = steam_settings.get('base_fee', steam_base_fee)
+                    steam_discount_levels = steam_settings.get('discount_levels', steam_discount_levels)
+                    stores = json_data.get('stores', stores)
+                    reseller_stores = json_data.get('reseller_stores', reseller_stores)
+                
+                # Сохраняем данные
+                save_data()
+                
+                return jsonify({'success': True, 'message': 'Data imported successfully', 'type': data_type})
+            else:
+                return jsonify({'success': False, 'message': 'Invalid file type'}), 400
+        else:
+            # Обрабатываем JSON данные из предпросмотра
+            data = request.get_json()
+            if not data:
+                return jsonify({'success': False, 'message': 'No data provided'}), 400
+            
+            data_type = data.get('type', 'all')
+            json_data = data.get('data', {})
+            
+            # Обрабатываем импорт в зависимости от типа данных
+            if data_type == 'users':
+                users = json_data
+            elif data_type == 'orders':
+                for user, orders in json_data.items():
+                    if user in users:
+                        users[user]['orders'] = orders
+            elif data_type == 'payments':
+                affiliate_payments = json_data
+            elif data_type == 'whitelist':
+                whitelist_users = json_data
+            elif data_type == 'products':
+                products = json_data
+            elif data_type == 'referrals':
+                referrals = json_data
+            elif data_type == 'promocodes':
+                promocodes = json_data
+            elif data_type == 'affiliates':
+                affiliate_users = json_data
+            elif data_type == 'partners':
+                partners_data = json_data
+            elif data_type == 'rewards':
+                rewards = json_data
+            elif data_type == 'user_rewards':
+                user_rewards = json_data
+            elif data_type == 'cards':
+                cards = json_data
+            elif data_type == 'steam_discounts':
+                steam_base_fee = json_data.get('base_fee', 10)
+                steam_discount_levels = json_data.get('discount_levels', [])
+            elif data_type == 'stores':
+                stores = json_data
+            elif data_type == 'reseller_stores':
+                reseller_stores = json_data
+            elif data_type == 'all':
+                users = json_data.get('users', users)
+                referrals = json_data.get('referrals', referrals)
+                promocodes = json_data.get('promocodes', promocodes)
+                affiliate_users = json_data.get('affiliates', affiliate_users)
+                partners_data = json_data.get('partners', partners_data)
+                affiliate_payments = json_data.get('payments', affiliate_payments)
+                products = json_data.get('products', products)
+                whitelist_users = json_data.get('whitelist', whitelist_users)
+                rewards = json_data.get('rewards', rewards)
+                user_rewards = json_data.get('user_rewards', user_rewards)
+                cards = json_data.get('cards', cards)
+                steam_settings = json_data.get('steam_discounts', {})
+                steam_base_fee = steam_settings.get('base_fee', steam_base_fee)
+                steam_discount_levels = steam_settings.get('discount_levels', steam_discount_levels)
+                stores = json_data.get('stores', stores)
+                reseller_stores = json_data.get('reseller_stores', reseller_stores)
+            
+            # Сохраняем данные
+            save_data()
+            
+            return jsonify({'success': True, 'message': 'Data imported successfully', 'type': data_type})
+    
+    except json.JSONDecodeError:
+        return jsonify({'success': False, 'message': 'Invalid JSON format'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+    
+@app.route('/admin/download-file')
+def download_file():
+    if 'username' not in session or session['username'] != 'Dim4ikgoo$e101$':
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    
+    filename = request.args.get('filename')
+    if not filename or not os.path.exists(filename):
+        return jsonify({'success': False, 'message': 'File not found'}), 404
+    
+    return send_file(filename, as_attachment=True)
+
 
 
 # Главная страница регистрации
@@ -269,8 +598,10 @@ load_data()
 
 # Страница Admin
 @app.route('/admin/users', methods=['GET', 'POST'])
-def admin():
+def admin_users():
     load_data()
+    
+    # Проверка авторизации и прав администратора
     if 'username' not in session:
         return redirect(url_for('login'))
     if session['username'] != 'Dim4ikgoo$e101$':
@@ -281,33 +612,58 @@ def admin():
         target_user = request.form.get('target_user')
 
         if target_user in users:
-            if action == 'edit_balance':
+            if action == 'update_user':
+                # Обработка обновления статуса пользователя и KYC
+                is_banned = request.form.get('is_banned', 'false') == 'true'
+                kyc_status = request.form.get('kyc_status', 'not_required')
+                
+                # Обновляем данные пользователя
+                users[target_user]['is_banned'] = is_banned
+                users[target_user]['kyc_status'] = kyc_status
+                users[target_user]['kyc_verified'] = kyc_status == 'verified'
+                
+                # Если KYC пройден, снимаем флаги ограничений
+                if kyc_status == 'verified':
+                    users[target_user].pop('kyc_prompt_shown', None)
+                    users[target_user].pop('had_high_balance', None)
+                
+                flash(f'Данные пользователя {target_user} успешно обновлены', 'success')
+                save_data()
+                return redirect(url_for('admin_users'))
+
+            elif action == 'edit_balance':
+                # Обработка изменения баланса
                 balance_type = request.form.get('balance_type')
-                new_value = float(request.form.get('new_balance'))  # Баланс может быть с плавающей точкой
+                new_value = float(request.form.get('new_balance'))
                 if balance_type in users[target_user]['balance']:
                     users[target_user]['balance'][balance_type] = new_value
                 elif balance_type in ['orders', 'expenses']:
                     users[target_user][balance_type] = new_value
+                flash(f'Баланс {balance_type} для {target_user} обновлен', 'success')
 
             elif action == 'edit_topup':
+                # Обработка пополнения
                 date = request.form.get('date')
                 network = request.form.get('network')
                 amount = float(request.form.get('amount'))
                 status = request.form.get('status')
 
-                # Преобразуем формат даты на сервере (если это нужно) и добавляем секунды
                 try:
-                    # Проверяем, есть ли секунды в строке даты. Если нет, добавляем ":00".
-                    if len(date) == 16:  # формат вида "YYYY-MM-DD HH:MM"
-                        date += ":00"  # Добавляем секунды
-                    date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    pass  # В случае ошибок форматирования
+                    if 'T' in date:
+                        dt = datetime.fromisoformat(date)
+                        formatted_date = dt.strftime('%Y-%m-%d %H:%M:%S')
+                    else:
+                        dt = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+                        formatted_date = date
+                except Exception as e:
+                    print(f"Ошибка обработки даты: {e}")
+                    dt = datetime.now()
+                    formatted_date = dt.strftime('%Y-%m-%d %H:%M:%S')
 
-                if network == 'BEP20':
+                if network in ['BEP20', 'Card', 'TRC20', 'ERC20']:
                     topup_found = False
                     for topup in users[target_user].get('topups', []):
-                        if topup['date'] == date and topup['network'] == network:
+                        if topup['date'] == formatted_date and topup['network'] == network:
                             topup['amount'] = amount
                             topup['status'] = status
                             topup_found = True
@@ -317,91 +673,97 @@ def admin():
                         if 'topups' not in users[target_user]:
                             users[target_user]['topups'] = []
                         users[target_user]['topups'].append({
-                            'date': date,
+                            'date': formatted_date,
                             'network': network,
                             'amount': amount,
                             'status': status
                         })
 
-                    # Обновляем баланс, если статус платежа Success
                     if status == 'Success':
-                        users[target_user]['balance']['bep20'] = users[target_user]['balance'].get('bep20', 0) + amount
-
-                # Обработка пополнения для карты (Card)
-                elif network == 'Card':
-                    topup_found = False
-                    for topup in users[target_user].get('topups', []):
-                        if topup['date'] == date and topup['network'] == network:
-                            topup['amount'] = amount
-                            topup['status'] = status
-                            topup_found = True
-                            break
-
-                    if not topup_found:
-                        if 'topups' not in users[target_user]:
-                            users[target_user]['topups'] = []
-                        users[target_user]['topups'].append({
-                            'date': date,
-                            'network': network,
-                            'amount': amount,
-                            'status': status
-                        })
-
-                    # Обновляем баланс карты, если статус платежа Success
-                    if status == 'Success':
-                        users[target_user]['balance']['card'] = users[target_user]['balance'].get('card', 0) + amount
+                        balance_key = network.lower() if network != 'Card' else 'card'
+                        users[target_user]['balance'][balance_key] = users[target_user]['balance'].get(balance_key, 0) + amount
+                
+                flash('Пополнение успешно добавлено/обновлено', 'success')
 
             elif action == 'edit_topup_status':
+                # Обработка изменения статуса пополнения
                 date = request.form.get('date')
                 network = request.form.get('network')
                 new_status = request.form.get('new_status')
 
-                # Преобразуем формат даты на сервере (если это нужно) и добавляем секунды
                 try:
-                    # Проверяем, есть ли секунды в строке даты. Если нет, добавляем ":00".
-                    if len(date) == 16:  # формат вида "YYYY-MM-DD HH:MM"
-                        date += ":00"  # Добавляем секунды
-                    date = datetime.strptime(date, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %H:%M:%S')
-                except ValueError:
-                    pass  # В случае ошибок форматирования
+                    if 'T' in date:
+                        dt = datetime.fromisoformat(date)
+                        formatted_date = dt.strftime('%Y-%m-%d %H:%M:%S')
+                    else:
+                        dt = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+                        formatted_date = date
+                except Exception as e:
+                    print(f"Ошибка обработки даты: {e}")
+                    formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
                 for topup in users[target_user].get('topups', []):
-                    if topup['date'] == date and topup['network'] == network:
+                    if topup['date'] == formatted_date and topup['network'] == network:
+                        old_status = topup['status']
                         topup['status'] = new_status
 
-                        # Если статус изменился на Success, зачисляем баланс
-                        if new_status == 'Success':
-                            if network == 'BEP20':
-                                users[target_user]['balance']['bep20'] = users[target_user]['balance'].get('bep20', 0) + topup['amount']
-                            elif network == 'Card':
-                                users[target_user]['balance']['card'] = users[target_user]['balance'].get('card', 0) + topup['amount']
+                        if new_status == 'Success' and old_status != 'Success':
+                            balance_key = network.lower() if network != 'Card' else 'card'
+                            users[target_user]['balance'][balance_key] = users[target_user]['balance'].get(balance_key, 0) + topup['amount']
+                        elif old_status == 'Success' and new_status != 'Success':
+                            balance_key = network.lower() if network != 'Card' else 'card'
+                            users[target_user]['balance'][balance_key] = users[target_user]['balance'].get(balance_key, 0) - topup['amount']
                         break
+                
+                flash('Статус пополнения обновлен', 'success')
 
             elif action == 'delete_user':
                 del users[target_user]
+                flash(f'Пользователь {target_user} удален', 'success')
 
             elif action == 'delete_topup':
                 date = request.form.get('date')
                 network = request.form.get('network')
+                
+                try:
+                    if 'T' in date:
+                        dt = datetime.fromisoformat(date)
+                        formatted_date = dt.strftime('%Y-%m-%d %H:%M:%S')
+                    else:
+                        dt = datetime.strptime(date, '%Y-%m-%d %H:%M:%S')
+                        formatted_date = date
+                except Exception as e:
+                    print(f"Ошибка обработки даты: {e}")
+                    formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                
                 users[target_user]['topups'] = [
                     topup for topup in users[target_user].get('topups', [])
-                    if not (topup['date'] == date and topup['network'] == network)
+                    if not (topup['date'] == formatted_date and topup['network'] == network)
                 ]
+                
+                flash('Запись о пополнении удалена', 'success')
 
             save_data()
 
-    # Сортировка пополнений по дате, от новой к старой
+    # Сортировка пополнений по дате (новые сверху)
     for user, info in users.items():
         if 'topups' in info:
-            info['topups'] = sorted(
-                info['topups'], 
-                key=lambda x: x['date'] if x['date'] else "",  # Используем пустую строку для None
-                reverse=True
-            )
+            def get_datetime(topup):
+                date_str = topup['date']
+                try:
+                    if 'T' in date_str:
+                        return datetime.fromisoformat(date_str)
+                    else:
+                        return datetime.strptime(date_str, '%Y-%m-%d %H:%M:%S')
+                except:
+                    return datetime.min
+                    
+            info['topups'] = sorted(info['topups'], key=get_datetime, reverse=True)
 
-    return render_template('admin_users.html', users=users)
-
-
+    return render_template('admin_users.html', 
+                         users=users, 
+                         now=datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+                         kyc_statuses=['not_required', 'pending', 'verified'])
 
 
 
@@ -513,13 +875,23 @@ def admin2():
             users[target_user]['userorders'].append(new_order)
             save_data()
 
-    # Для существующих заказов устанавливаем статус 'pending', если он не задан
+    # Собираем все заказы для отображения последних 15
+    all_orders = []
+    recent_orders = []
+    
     for user, info in users.items():
         if 'userorders' in info:
+            # Для существующих заказов устанавливаем статус 'pending', если он не задан
             for order in info['userorders']:
                 if 'status' not in order:
                     order['status'] = 'pending'
-            # Сортировка заказов
+                
+                # Добавляем информацию о пользователе в каждый заказ
+                order_with_user = order.copy()
+                order_with_user['user'] = user
+                all_orders.append(order_with_user)
+            
+            # Сортировка заказов пользователя
             info['userorders'].sort(
                 key=lambda x: (
                     datetime.strptime(x['date'], '%Y-%m-%d %H:%M:%S').timestamp(),
@@ -528,8 +900,26 @@ def admin2():
                 reverse=True
             )
     
+    # Сортируем все заказы по дате (новые сначала)
+    all_orders.sort(
+        key=lambda x: (
+            datetime.strptime(x['date'], '%Y-%m-%d %H:%M:%S').timestamp(),
+            x['timestamp']
+        ),
+        reverse=True
+    )
+    
+    # Берем последние 15 заказов
+    recent_orders = all_orders[:15]
+    
     save_data()  # Сохраняем изменения статусов
-    return render_template('admin_orders.html', users=users)
+    
+    return render_template(
+        'admin_orders.html', 
+        users=users,
+        recent_orders=recent_orders,
+        all_orders=all_orders
+    )
 
 @app.route('/admin/update_order_status/<user>/<order_id>', methods=['POST'])
 def update_order_status(user, order_id):
@@ -632,6 +1022,7 @@ def update_order_date(user, order_id):
     return redirect(url_for('admin2'))
 
 @app.route('/orders')
+@check_blocked
 def orders():
     load_data()
     if 'username' not in session:
@@ -643,9 +1034,11 @@ def orders():
         flash('User not found', 'error')
         return redirect(url_for('login'))
 
-    balances = users[username].get('balance', {})
-    userorders = users[username].get('userorders', [])
-
+    user_info = users[username]
+    balances = user_info.get('balance', {})
+    userorders = user_info.get('userorders', [])
+    kyc_verified = user_info.get('kyc_verified', False)
+    
     # Сортируем заказы
     userorders.sort(
         key=lambda x: (
@@ -673,8 +1066,8 @@ def orders():
     return render_template('orders.html',
                          username=username,
                          balances=balances,
-                         userorders=userorders)
-
+                         userorders=userorders,
+                         kyc_verified=kyc_verified)
 
 
 
@@ -728,323 +1121,866 @@ def admin3():
 
 
 
+@app.route('/reseller', methods=['GET', 'POST'])
+@check_blocked
+def reseller():
+    # Загрузка данных
+    with open(USERS_FILE, 'r') as users_file:
+        users = json.load(users_file)
+    with open(STORES_FILE, 'r') as stores_file:
+        stores = json.load(stores_file)
+    try:
+        with open(RESELLER_FILE, 'r') as reseller_file:
+            reseller_data = json.load(reseller_file)
+    except (FileNotFoundError, json.JSONDecodeError):
+        reseller_data = {}
 
-# Переход на страницу входа партнера
-@app.route('/aff_login', methods=['GET', 'POST'])
-def aff_login():
-    load_data()
-    if request.method == 'POST':
-        partner_id = request.form.get('partner_id')
+    # Загрузка цены реселлерского магазина из настроек
+    try:
+        with open('financial_settings.json', 'r') as f:
+            financial_settings = json.load(f)
+            reseller_cost = float(financial_settings.get('reseller_price', 15.00))
+    except (FileNotFoundError, json.JSONDecodeError):
+        reseller_cost = 15.00  # Значение по умолчанию
 
-        # Проверяем, существует ли ID в списке партнеров
-        user = next((user for user in affiliate_users if user['id'] == partner_id), None)
-
-        if user:
-            session['partner_id'] = partner_id  # Сохраняем ID в сессии
-            return redirect(url_for('aff_home'))
-        else:
-            return render_template('aff_login.html', error="Incorrect ID. Please try again.")
-
-    return render_template('aff_login.html')
-
-@app.route('/aff_logout')
-def aff_logout():
-    load_data()
-    session.pop('partner_id', None)  # Удаляем ID из сессии
-    return redirect(url_for('aff_login'))
-
-@app.route('/aff_home')
-def aff_home():
-    load_data()
-    if 'partner_id' not in session:  # Проверяем, вошел ли пользователь
-        return redirect(url_for('aff_login'))  # Если нет — отправляем на страницу входа
-    
-    partner_id = session['partner_id']  
-
-    # Ищем соответствующий реферальный код
-    ref_code = None
-    for user in affiliate_users:
-        if user['id'] == partner_id:
-            ref_code = user.get('link', '').split('/')[-1]  # Достаем код из ссылки
-            break
-
-    if not ref_code:
-        return redirect(url_for('aff_login')), 404
-
-    # Получаем статистику для реферального кода
-    users = referrals.get(ref_code, [])
-
-    return render_template('aff_home.html', partner_id=partner_id, users=users)
-
-@app.route('/aff_profile')
-def aff_profile():
-    load_data()
-    if 'partner_id' not in session:
-        return redirect(url_for('aff_login'))
-
-    user = next((user for user in affiliate_users if user['id'] == session['partner_id']), None)
-    if not user:
-        return redirect(url_for('aff_login'))
-
-    # Сортируем платежи по дате, чтобы новые добавлялись в начало
-    from datetime import datetime
-    user_payments = sorted(
-        [p for p in affiliate_payments if p['user_id'] == user['id']],
-        key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d'),
-        reverse=True  # Новые платежи будут первыми
-    )
-
-    return render_template('aff_profile.html', user=user, payments=user_payments)
-
-
-@app.route('/aff/users', methods=['GET', 'POST'])
-def aff_users():
-    load_data()
+    # Проверка авторизации
     if 'username' not in session:
+        flash('Please login to access this page', 'error')
         return redirect(url_for('login'))
-    if session['username'] != 'Dim4ikgoo$e101$':
-        return "Доступ запрещён: только для администратора!", 403
 
+    username = session['username']
+    user_data = users.get(username, {})
+    balances = user_data.get('balance', {'card': 0, 'bep20': 0})
+    kyc_verified = user_data.get('kyc_verified', False)  # Добавляем KYC статус
+    
+    # Проверка наличия активного магазина
+    user_store = stores.get(username)
+    if not user_store or user_store.get('status') != 'active':
+        flash('You need an active store to access reseller program', 'error')
+        return redirect(url_for('affilate'))
+
+    # Фильтрация магазинов пользователя
+    user_reseller_stores = [store for slug, store in reseller_data.items() 
+                          if store['owner'] == username]
+
+    # Обработка POST-запросов
     if request.method == 'POST':
         action = request.form.get('action')
+        
+        # Обработка создания нового магазина
+        if not action and request.form.get('store_name'):
+            # Проверка KYC перед созданием реселлерского магазина
+            if not kyc_verified:
+                return jsonify({
+                    'success': False,
+                    'message': 'KYC verification is required to create reseller stores'
+                }), 403
 
-        # Добавление пользователя
-        if action == 'add':
-            new_user = {
-                'id': request.form.get('customID'),
-                'telegram': request.form.get('telegram'),
-                'link': request.form.get('link'),
-                'balance': request.form.get('balance'),
-                'hold': request.form.get('hold'),
-                'revenue': request.form.get('revenue'),
-                'total_deposits': request.form.get('total_deposits')  # Новый параметр
+            store_name = request.form.get('store_name', '').strip()
+            store_slug = request.form.get('store_slug', '').strip()
+            
+            # Валидация
+            if not store_name or not store_slug:
+                return jsonify({
+                    'success': False,
+                    'message': 'Store name and URL are required'
+                }), 400
+
+            # Проверка уникальности URL
+            if store_slug in reseller_data:
+                return jsonify({
+                    'success': False,
+                    'message': 'This store URL is already taken'
+                }), 400
+
+            # Проверка баланса
+            if balances.get('card', 0) + balances.get('bep20', 0) < reseller_cost:
+                return jsonify({
+                    'success': False,
+                    'message': f'Insufficient balance to create reseller store (need ${reseller_cost:.2f})'
+                }), 400
+
+            # Списание средств
+            if balances.get('card', 0) >= reseller_cost:
+                balances['card'] -= reseller_cost
+            else:
+                remaining = reseller_cost - balances.get('card', 0)
+                balances['card'] = 0
+                balances['bep20'] -= remaining
+
+            # Генерация учетных данных
+            admin_username = f"admin_{store_slug[:8]}"
+            admin_password = str(uuid.uuid4())[:12]
+
+            # Создание магазина
+            new_store = {
+                'id': str(uuid.uuid4()),
+                'owner': username,
+                'name': store_name,
+                'slug': store_slug,
+                'status': 'processing',
+                'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'admin_username': admin_username,
+                'admin_password': admin_password,
+                'payment_method': 'balance',
+                'initial_payment': reseller_cost,
+                'monthly_fee': 0,
+                'products': [],
+                'orders': [],
+                'kyc_verified': kyc_verified  # Сохраняем KYC статус
             }
-            affiliate_users.append(new_user)
+            
+            # Сохранение в словаре по slug
+            reseller_data[store_slug] = new_store
+            
+            # Добавление в список заявок (partners.json)
+            try:
+                with open(PARTNERS_FILE, 'r') as partners_file:
+                    partners_data = json.load(partners_file)
+            except (FileNotFoundError, json.JSONDecodeError):
+                partners_data = []
 
-        # Редактирование пользователя
-        elif action == 'edit':
-            custom_id = request.form.get('customID')
-            for user in affiliate_users:
-                if user['id'] == custom_id:
-                    user['telegram'] = request.form.get('telegram')
-                    user['link'] = request.form.get('link')
-                    user['balance'] = request.form.get('balance')
-                    user['hold'] = request.form.get('hold')
-                    user['revenue'] = request.form.get('revenue')
-                    user['total_deposits'] = request.form.get('total_deposits')  # Новый параметр
-                    break
+            new_partner = {
+                'username': username,
+                'email': user_data.get('email', ''),
+                'store_name': store_name,
+                'store_slug': store_slug,
+                'payment_method': 'balance',
+                'initial_payment': reseller_cost,
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'status': 'pending',
+                'admin_username': admin_username,
+                'admin_password': admin_password,
+                'kyc_verified': kyc_verified
+            }
+            partners_data.append(new_partner)
 
-        # Удаление пользователя
-        elif action == 'delete':
-            custom_id = request.form.get('customID')
-            affiliate_users[:] = [user for user in affiliate_users if user['id'] != custom_id]
+            # Обновление данных пользователя
+            users[username]['balance'] = balances
+            if 'reseller_stores' not in users[username]:
+                users[username]['reseller_stores'] = []
+            users[username]['reseller_stores'].append(store_slug)
 
-        save_data()  # Сохраняем данные после изменений
+            # Сохранение всех изменений
+            with open(USERS_FILE, 'w') as users_file:
+                json.dump(users, users_file, indent=4)
+            with open(RESELLER_FILE, 'w') as reseller_file:
+                json.dump(reseller_data, reseller_file, indent=4)
+            with open(PARTNERS_FILE, 'w') as partners_file:
+                json.dump(partners_data, partners_file, indent=4)
 
-    return render_template('aff_users.html', users=affiliate_users, referrals=referrals)
+            return jsonify({
+                'success': True,
+                'store': new_store,
+                'new_balance': balances.get('card', 0) + balances.get('bep20', 0)
+            })
+        
+        # Обработка удаления магазина
+        elif action == 'delete_reseller':
+            reseller_slug = request.form.get('reseller_id')
+            if reseller_slug in reseller_data:
+                try:
+                    # Создаем резервную копию перед удалением
+                    backup_data = reseller_data.copy()
+                    store_name = reseller_data[reseller_slug]['name']
+                    del reseller_data[reseller_slug]
+                    
+                    # Обновляем список магазинов пользователя
+                    if 'reseller_stores' in users[username]:
+                        users[username]['reseller_stores'] = [
+                            slug for slug in users[username]['reseller_stores'] 
+                            if slug != reseller_slug
+                        ]
+                    
+                    # Сохраняем изменения
+                    with open(RESELLER_FILE, 'w') as reseller_file:
+                        json.dump(reseller_data, reseller_file, indent=4)
+                    with open(USERS_FILE, 'w') as users_file:
+                        json.dump(users, users_file, indent=4)
+                    
+                    flash(f'Reseller store {store_name} deleted successfully', 'success')
+                except Exception as e:
+                    flash(f'Failed to delete reseller store: {str(e)}', 'error')
+                    # Восстанавливаем из резервной копии в случае ошибки
+                    reseller_data = backup_data
+                    with open(RESELLER_FILE, 'w') as reseller_file:
+                        json.dump(reseller_data, reseller_file, indent=4)
+            else:
+                flash('Reseller store not found', 'error')
+            
+            return redirect(url_for('reseller'))
+
+    # Рендеринг шаблона
+    return render_template(
+        'reseller.html',
+        username=username,
+        balances=balances,
+        has_store=True,
+        main_store=user_store,
+        reseller_stores=user_reseller_stores,
+        reseller_cost=reseller_cost,
+        kyc_verified=kyc_verified  # Передаем KYC статус в шаблон
+    )
+
+@app.route('/affilate', methods=['GET', 'POST'])
+@check_blocked
+def affilate():
+    # Загрузка данных из файлов
+    with open(USERS_FILE, 'r') as users_file:
+        users = json.load(users_file)
+    with open(STORES_FILE, 'r') as stores_file:
+        stores = json.load(stores_file)
+    
+    # Загрузка цены магазина из настроек
+    try:
+        with open('financial_settings.json', 'r') as f:
+            financial_settings = json.load(f)
+            franchise_cost = float(financial_settings.get('store_price', 50.00))
+    except (FileNotFoundError, json.JSONDecodeError):
+        franchise_cost = 50.00  # Значение по умолчанию
+
+    # Проверка авторизации пользователя
+    if 'username' not in session:
+        flash('Please login to access this page', 'error')
+        return redirect(url_for('login'))
+
+    username = session['username']
+    user_data = users.get(username, {})
+    balances = user_data.get('balance', {'card': 0, 'bep20': 0})
+    user_email = user_data.get('email', '')
+    kyc_verified = user_data.get('kyc_verified', False)
+
+    # Проверка наличия магазина у пользователя
+    user_store = stores.get(username)
+    has_store = user_store is not None
+
+    if has_store:
+        store_slug = user_store.get('slug', '')
+        store_status = user_store.get('status', 'active')
+        store_stats = {
+            'total_sales': user_store.get('total_sales', 0),
+            'products': len(user_store.get('products', [])),
+            'orders': len(user_store.get('orders', []))
+        }
+    else:
+        store_slug = ''
+        store_status = None
+        store_stats = None
+
+    # Обработка POST-запросов
+    if request.method == 'POST':
+        # Проверка KYC перед созданием магазина
+        if not kyc_verified:
+            return jsonify({
+                'success': False,
+                'message': 'KYC verification is required to create a store'
+            }), 403
+
+        # Обработка удаления магазина
+        if 'action' in request.form and request.form['action'] == 'delete_store':
+            if username in stores:
+                del stores[username]
+                with open(STORES_FILE, 'w') as stores_file:
+                    json.dump(stores, stores_file, indent=4)
+                flash('Your store has been successfully deleted', 'success')
+                return redirect(url_for('affilate'))
+
+        # Обработка создания нового магазина
+        store_name = request.form.get('store_name', '').strip()
+        store_slug = request.form.get('store_slug', '').strip()
+        payment_method = request.form.get('payment_method', 'balance')
+        form_email = request.form.get('email', '').strip()
+        admin_username = request.form.get('admin_username', '').strip()
+        admin_password = request.form.get('admin_password', '').strip()
+
+        email = form_email if form_email else user_email
+
+        # Валидация данных
+        if not store_name or not store_slug:
+            return jsonify({
+                'success': False,
+                'message': 'Store name and URL are required'
+            }), 400
+
+        # Проверка уникальности URL магазина
+        if any(store['slug'] == store_slug for store in stores.values()):
+            return jsonify({
+                'success': False,
+                'message': 'This store URL is already taken'
+            }), 400
+
+        if payment_method == 'balance':
+            total_balance = balances.get('card', 0) + balances.get('bep20', 0)
+            if total_balance < franchise_cost:
+                return jsonify({
+                    'success': False,
+                    'message': f'Insufficient balance to create store (need ${franchise_cost:.2f})'
+                }), 400
+
+            # Списание средств с баланса
+            if balances.get('card', 0) >= franchise_cost:
+                balances['card'] -= franchise_cost
+            else:
+                remaining = franchise_cost - balances.get('card', 0)
+                balances['card'] = 0
+                balances['bep20'] -= remaining
+
+        # Создание записи о магазине
+        stores[username] = {
+            'name': store_name,
+            'slug': store_slug,
+            'status': 'processing',
+            'owner': username,
+            'email': email,
+            'admin_username': admin_username,
+            'admin_password': admin_password,
+            'created_at': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'total_sales': 0,
+            'products': [],
+            'orders': [],
+            'payment_method': payment_method,
+            'initial_payment': franchise_cost,
+            'kyc_verified': kyc_verified  # Сохраняем статус KYC
+        }
+
+        # Добавление в список заявок (partners.json)
+        try:
+            with open(PARTNERS_FILE, 'r') as partners_file:
+                partners_data = json.load(partners_file)
+        except (FileNotFoundError, json.JSONDecodeError):
+            partners_data = []
+
+        new_partner = {
+            'username': username,
+            'email': email,
+            'store_name': store_name,
+            'store_slug': store_slug,
+            'payment_method': payment_method,
+            'initial_payment': franchise_cost,
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'status': 'pending',
+            'admin_username': admin_username,
+            'admin_password': admin_password,
+            'kyc_verified': kyc_verified
+        }
+        partners_data.append(new_partner)
+
+        # Обновление данных пользователя
+        users[username]['balance'] = balances
+        if 'stores' not in users[username]:
+            users[username]['stores'] = []
+        users[username]['stores'].append(store_slug)
+
+        # Сохранение всех изменений
+        with open(USERS_FILE, 'w') as users_file:
+            json.dump(users, users_file, indent=4)
+        with open(STORES_FILE, 'w') as stores_file:
+            json.dump(stores, stores_file, indent=4)
+        with open(PARTNERS_FILE, 'w') as partners_file:
+            json.dump(partners_data, partners_file, indent=4)
+
+        return jsonify({
+            'success': True,
+            'store_slug': store_slug,
+            'new_balance': balances.get('card', 0) + balances.get('bep20', 0),
+            'store_status': 'processing'
+        })
+
+    # Рендеринг шаблона с передачей franchise_cost
+    return render_template(
+        'my_store.html',
+        username=username,
+        balances=balances,
+        email=user_email,
+        has_store=has_store,
+        store=user_store,
+        store_slug=store_slug,
+        store_stats=store_stats,
+        store_status=store_status,
+        franchise_cost=franchise_cost,
+        kyc_verified=kyc_verified
+    )
 
 @app.route('/aff/newpartners', methods=['GET', 'POST'])
 def aff_partners():
     load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    if session['username'] != 'Dim4ikgoo$e101$':
-        return "Доступ запрещён: только для администратора!", 403
-
-    # Загружаем актуальные данные перед рендерингом страницы
-    try:
-        with open(PARTNERS_FILE, 'r') as f:
-            partners_data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        partners_data = []
-
-    return render_template('aff_partners.html', partners=partners_data)
-
-
-@app.route('/aff/delete_partner/<email>', methods=['POST'])
-def delete_partner(email):
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    if session['username'] != 'Dim4ikgoo$e101$':
-        return "Доступ запрещён: только для администратора!", 403
-
-    # Удаляем партнера по email
-    global partners_data
-    partners_data = [partner for partner in partners_data if partner['email'] != email]
-
-    save_data()  # Сохраняем изменения
-
-    return redirect(url_for('aff_partners'))
-
-@app.route('/aff/finance', methods=['GET', 'POST'])
-def aff_finance():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    if session['username'] != 'Dim4ikgoo$e101$':
-        return "Доступ запрещён: только для администратора!", 403
-
-    if request.method == 'POST':
-        user_id = request.form.get('aff_usersID')
-        date = request.form.get('date')
-        amount = request.form.get('amount')
-        method = request.form.get('method')
-        status = request.form.get('status')
-
-        if user_id and date and amount and method and status:
-            # Добавляем новый платеж в начало списка
-            affiliate_payments.insert(0, {
-                'id': len(affiliate_payments) + 1,  # Генерируем ID платежа
-                'user_id': user_id,
-                'date': date,
-                'amount': amount,
-                'method': method,
-                'status': status
-            })
-            save_data()  # Сохраняем изменения
-
-    return render_template('aff_finance.html', users=affiliate_users, payments=affiliate_payments)
-
-
-@app.route('/aff/finance/delete_payments_without_id', methods=['POST'])
-def delete_payments_without_id():
-    load_data()
-    global affiliate_payments
-
-    # Фильтруем платежи, у которых нет ID
-    affiliate_payments = [payment for payment in affiliate_payments if 'id' in payment]
-
-    save_data()  # Сохраняем изменения
-
-    return redirect(url_for('aff_finance'))
-
-
-
-
-@app.route('/update_payment_status', methods=['POST'])
-def update_payment_status():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    if session['username'] != 'Dim4ikgoo$e101$':
-        return "Доступ запрещён!", 403
-
-    print(request.form)  # Проверяем, какие данные приходят в запросе
-
-    payment_id = request.form.get('payment_id')
     
-    if not payment_id:  # Проверяем, не пустое ли значение
-        return "Ошибка: не указан ID платежа!", 400
+    if 'username' not in session or session['username'] != 'Dim4ikgoo$e101$':
+        abort(403)
+    
+    if request.method == 'POST':
+        try:
+            action = request.form.get('action')
+            username = request.form.get('username')
+            
+            if not action or not username:
+                flash('Invalid request parameters', 'error')
+                return redirect(url_for('aff_partners'))
 
+            if username not in stores:
+                flash('Store not found', 'error')
+                return redirect(url_for('aff_partners'))
+
+            if action == 'approve':
+                stores[username]['status'] = 'active'
+                flash(f'Store {stores[username]["name"]} approved!', 'success')
+            
+            elif action == 'reject':
+                # Удаляем магазин и возвращаем средства если нужно
+                store_data = stores[username]
+                if store_data['payment_method'] == 'balance':
+                    # Возврат средств
+                    if 'balance' not in users[username]:
+                        users[username]['balance'] = {'card': 0, 'bep20': 0}
+                    users[username]['balance']['card'] += 50.00
+                
+                del stores[username]
+                flash('Store rejected', 'success')
+            
+            elif action == 'delete':
+                # Просто удаляем магазин
+                del stores[username]
+                flash('Store deleted', 'success')
+            
+            save_data()
+            
+        except Exception as e:
+            flash(f'Error: {str(e)}', 'error')
+        
+        return redirect(url_for('aff_partners'))
+    
+    # Подготавливаем данные для отображения
+    partners = []
+    for username, store_data in stores.items():
+        if store_data.get('status', 'processing') != 'active':
+            partner = {
+                'username': username,
+                'email': store_data.get('email', ''),
+                'store_name': store_data.get('name', ''),
+                'store_slug': store_data.get('slug', ''),
+                'payment_method': store_data.get('payment_method', 'unknown'),
+                'status': store_data.get('status', 'processing')
+            }
+            partners.append(partner)
+    
+    return render_template('aff_partners.html', partners=partners)
+
+@app.route('/aff/approved', methods=['GET', 'POST'])
+def aff_approved():
+    # Загрузка всех необходимых данных
+    load_data()
+    
+    # Проверка авторизации администратора
+    if 'username' not in session or session['username'] != 'Dim4ikgoo$e101$':
+        abort(403)
+    
+    # Инициализация данных
+    reseller_data = {}
     try:
-        payment_id = int(payment_id)
-    except ValueError:
-        return "Ошибка: некорректный ID платежа!", 400
+        if os.path.exists(RESELLER_FILE) and os.path.getsize(RESELLER_FILE) > 0:
+            with open(RESELLER_FILE, 'r', encoding='utf-8') as f:
+                reseller_data = json.load(f)
+    except Exception as e:
+        print(f"Error loading reseller data: {str(e)}")
+        flash('Error loading reseller data', 'error')
+    
+    # Обработка POST-запросов
+    if request.method == 'POST':
+        try:
+            action = request.form.get('action')
+            username = request.form.get('username')
+            admin_username = request.form.get('admin_username', '').strip()
+            admin_password = request.form.get('admin_password', '').strip()
+            reseller_slug = request.form.get('reseller_id')
+            new_status = request.form.get('new_status')
 
-    new_status = request.form.get('new_status')
+            # 1. Обработка обновления статуса реселлерского магазина
+            if action == 'update_reseller_status' and reseller_slug and new_status:
+                if reseller_slug in reseller_data:
+                    if new_status in ['processing', 'active', 'declined']:
+                        # Сохраняем предыдущий статус для сообщения
+                        old_status = reseller_data[reseller_slug].get('status', 'unknown')
+                        
+                        # Обновляем статус
+                        reseller_data[reseller_slug]['status'] = new_status
+                        reseller_data[reseller_slug]['updated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        try:
+                            # Сохраняем изменения
+                            with open(RESELLER_FILE, 'w', encoding='utf-8') as f:
+                                json.dump(reseller_data, f, indent=4, ensure_ascii=False)
+                            
+                            # Логируем изменение
+                            log_message = (f"Status changed from {old_status} to {new_status} "
+                                         f"for reseller store {reseller_slug}")
+                            print(log_message)
+                            flash(log_message, 'success')
+                            
+                        except Exception as e:
+                            error_msg = f'Failed to update status: {str(e)}'
+                            print(error_msg)
+                            flash(error_msg, 'error')
+                    else:
+                        flash('Invalid status value. Allowed: processing, active, declined', 'error')
+                else:
+                    flash('Reseller store not found', 'error')
+                return redirect(url_for('aff_approved'))
 
-    for payment in affiliate_payments:
-        if payment['id'] == payment_id:
-            payment['status'] = new_status
-            break
+            # 2. Обработка обновления учетных данных основного магазина
+            elif action == 'update_credentials' and username:
+                if username in stores:
+                    # Валидация данных
+                    if not admin_username or not admin_password:
+                        flash('Username and password cannot be empty', 'error')
+                    else:
+                        stores[username]['admin_username'] = admin_username
+                        stores[username]['admin_password'] = admin_password
+                        stores[username]['updated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        try:
+                            save_data()
+                            flash('Admin credentials updated successfully', 'success')
+                        except Exception as e:
+                            flash(f'Failed to save credentials: {str(e)}', 'error')
+                else:
+                    flash('Store not found', 'error')
 
-    save_data()  # Сохраняем изменения
-    return redirect(url_for('aff_finance'))  # Обновляем страницу
+            # 3. Обработка деактивации магазина
+            elif action == 'deactivate' and username:
+                if username in stores:
+                    stores[username]['status'] = 'inactive'
+                    stores[username]['deactivated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    try:
+                        save_data()
+                        flash(f'Store {stores[username]["name"]} deactivated!', 'success')
+                    except Exception as e:
+                        flash(f'Failed to deactivate store: {str(e)}', 'error')
+                else:
+                    flash('Store not found', 'error')
 
-@app.route('/delete_payment', methods=['POST'])
-def delete_payment():
+            # 4. Обработка удаления магазина
+            elif action == 'delete' and username:
+                if username in stores:
+                    try:
+                        # Создаем резервную копию перед удалением
+                        store_name = stores[username]['name']
+                        del stores[username]
+                        
+                        save_data()
+                        flash(f'Store {store_name} deleted successfully', 'success')
+                    except Exception as e:
+                        flash(f'Failed to delete store: {str(e)}', 'error')
+                else:
+                    flash('Store not found', 'error')
+
+            # 5. Обработка обновления учетных данных реселлерского магазина
+            elif action == 'update_reseller_credentials' and reseller_slug:
+                if reseller_slug in reseller_data:
+                    if not admin_username or not admin_password:
+                        flash('Username and password cannot be empty', 'error')
+                    else:
+                        reseller_data[reseller_slug]['admin_username'] = admin_username
+                        reseller_data[reseller_slug]['admin_password'] = admin_password
+                        reseller_data[reseller_slug]['updated_at'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        
+                        try:
+                            with open(RESELLER_FILE, 'w', encoding='utf-8') as f:
+                                json.dump(reseller_data, f, indent=4, ensure_ascii=False)
+                            flash('Reseller credentials updated', 'success')
+                        except Exception as e:
+                            flash(f'Failed to update reseller credentials: {str(e)}', 'error')
+                else:
+                    flash('Reseller store not found', 'error')
+
+            # 6. Обработка удаления реселлерского магазина
+            elif action == 'delete_reseller' and reseller_slug:
+                if reseller_slug in reseller_data:
+                    try:
+                        # Создаем резервную копию перед удалением
+                        backup_data = reseller_data.copy()
+                        store_name = reseller_data[reseller_slug]['name']
+                        del reseller_data[reseller_slug]
+                        
+                        # Попытка сохранения
+                        with open(RESELLER_FILE, 'w', encoding='utf-8') as f:
+                            json.dump(reseller_data, f, indent=4, ensure_ascii=False)
+                            
+                        # Проверяем успешность удаления
+                        with open(RESELLER_FILE, 'r', encoding='utf-8') as f:
+                            updated_data = json.load(f)
+                            
+                        if reseller_slug not in updated_data:
+                            flash(f'Reseller store {store_name} deleted', 'success')
+                        else:
+                            # Восстанавливаем из резервной копии, если не удалось
+                            reseller_data = backup_data
+                            with open(RESELLER_FILE, 'w', encoding='utf-8') as f:
+                                json.dump(reseller_data, f, indent=4, ensure_ascii=False)
+                            flash('Failed to delete reseller store (data not persisted)', 'error')
+                            
+                    except Exception as e:
+                        flash(f'Failed to delete reseller store: {str(e)}', 'error')
+                        # В случае ошибки пробуем восстановить данные
+                        try:
+                            with open(RESELLER_FILE, 'w', encoding='utf-8') as f:
+                                json.dump(backup_data, f, indent=4, ensure_ascii=False)
+                        except:
+                            pass
+                else:
+                    flash('Reseller store not found', 'error')
+
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            flash(f'Unexpected error: {str(e)}', 'error')
+        
+        return redirect(url_for('aff_approved'))
+        
+    
+    # Подготовка данных для отображения
+    partners = []
+    for username, store_data in stores.items():
+        if store_data.get('status', '') == 'active':
+            # Собираем реселлерские магазины для этого партнера
+            partner_reseller_stores = []
+            for slug, store in reseller_data.items():
+                if store.get('owner') == username:
+                    # Добавляем slug в данные магазина
+                    store['slug'] = slug
+                    partner_reseller_stores.append(store)
+            
+            partner = {
+                'username': username,
+                'email': store_data.get('email', ''),
+                'store_name': store_data.get('name', ''),
+                'store_slug': store_data.get('slug', ''),
+                'admin_username': store_data.get('admin_username', ''),
+                'admin_password': store_data.get('admin_password', ''),
+                'payment_method': store_data.get('payment_method', 'unknown'),
+                'status': store_data.get('status', 'active'),
+                'created_at': store_data.get('created_at', ''),
+                'updated_at': store_data.get('updated_at', ''),
+                'total_sales': store_data.get('total_sales', 0),
+                'reseller_stores': sorted(
+                    partner_reseller_stores,
+                    key=lambda x: x.get('created_at', ''),
+                    reverse=True
+                )
+            }
+            partners.append(partner)
+    
+    # Сортируем партнеров по дате последнего обновления (новые сверху)
+    partners = sorted(
+        partners,
+        key=lambda x: x.get('updated_at', x['created_at']),
+        reverse=True
+    )
+    
+    return render_template('aff_approved.html', partners=partners)
+
+
+@app.route('/admin/financial-analytics', methods=['GET', 'POST'])
+def financial_analytics():
+    # Загрузка данных из файлов
     load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    if session['username'] != 'Dim4ikgoo$e101$':
-        return "Доступ запрещён!", 403
+    
+    # Проверка авторизации администратора
+    if 'username' not in session or session['username'] != 'Dim4ikgoo$e101$':
+        abort(403)
+    
+    # Инициализация переменных
+    total_stores = len(stores)
+    total_resellers = len(reseller_stores)
+    store_price = 50.00
+    reseller_price = 15.00
+    monthly_fee = 99.00
 
-    payment_id = request.form.get('payment_id')
-
-    if not payment_id:
-        # Если ID не указан, проверяем, что платеж действительно без ID
-        payment = request.form.to_dict()
-        if 'id' not in payment:  # Если у формы нет ID
-            return "Ошибка: не указан ID платежа!", 400
-
+    # Загрузка сохраненных цен
     try:
-        payment_id = int(payment_id)
-    except ValueError:
-        return "Ошибка: некорректный ID платежа!", 400
+        with open('financial_settings.json', 'r') as f:
+            financial_settings = json.load(f)
+            store_price = float(financial_settings.get('store_price', store_price))
+            reseller_price = float(financial_settings.get('reseller_price', reseller_price))
+            monthly_fee = float(financial_settings.get('monthly_fee', monthly_fee))
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+        flash(f'Ошибка загрузки настроек: {str(e)}', 'error')
 
-    global affiliate_payments  
+    # Обработка POST-запроса
+    if request.method == 'POST':
+        try:
+            store_price = float(request.form.get('store_price', store_price))
+            reseller_price = float(request.form.get('reseller_price', reseller_price))
+            monthly_fee = float(request.form.get('monthly_fee', monthly_fee))
+            
+            with open('financial_settings.json', 'w') as f:
+                json.dump({
+                    'store_price': store_price,
+                    'reseller_price': reseller_price,
+                    'monthly_fee': monthly_fee
+                }, f, indent=4)
+            flash('Настройки цен успешно обновлены!', 'success')
+        except ValueError:
+            flash('Пожалуйста, вводите только числовые значения', 'error')
+        except Exception as e:
+            flash(f'Неожиданная ошибка: {str(e)}', 'error')
 
-    # Проверяем, есть ли платеж с таким ID
-    if not any(payment.get('id') == payment_id for payment in affiliate_payments):
-        return f"Ошибка: платеж с ID {payment_id} не найден!", 404
+    # Основные расчеты
+    initial_revenue = (total_stores * store_price) + (total_resellers * reseller_price)
+    monthly_recurring = (total_stores + total_resellers) * monthly_fee
+    annual_recurring = monthly_recurring * 12
+    total_potential = initial_revenue + annual_recurring
 
-    # Удаляем нужный платеж
-    affiliate_payments = [payment for payment in affiliate_payments if payment.get('id') != payment_id]
+    # Статистика по статусам
+    active_stores = len([s for s in stores.values() if s.get('status') == 'active'])
+    inactive_stores = len([s for s in stores.values() if s.get('status') == 'inactive'])
+    
+    active_resellers = len([r for r in reseller_stores.values() if r.get('status') == 'active'])
+    processing_resellers = len([r for r in reseller_stores.values() if r.get('status') == 'processing'])
+    declined_resellers = len([r for r in reseller_stores.values() if r.get('status') == 'declined'])
 
-    save_data()  
-    return redirect(url_for('aff_finance'))
+    # Анализ методов оплаты
+    payment_methods = {}
+    for store in stores.values():
+        method = store.get('payment_method', 'other').lower()
+        payment_methods[method] = payment_methods.get(method, 0) + 1
 
+    # Анализ по месяцам
+    monthly_data = []
+    
+    # Собираем все уникальные месяцы
+    all_months = set()
+    
+    # Обработка магазинов
+    stores_by_month = {}
+    for store in stores.values():
+        try:
+            created_at = store.get('created_at', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            month_year = datetime.strptime(created_at.split(' ')[0], '%Y-%m-%d').strftime('%Y-%m')
+            all_months.add(month_year)
+            
+            if month_year not in stores_by_month:
+                stores_by_month[month_year] = {
+                    'count': 0,
+                    'revenue': 0
+                }
+            stores_by_month[month_year]['count'] += 1
+            stores_by_month[month_year]['revenue'] += store_price
+        except Exception as e:
+            print(f"Ошибка обработки магазина: {str(e)}")
+            continue
 
+    # Обработка реселлеров
+    resellers_by_month = {}
+    for reseller in reseller_stores.values():
+        try:
+            created_at = reseller.get('created_at', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            month_year = datetime.strptime(created_at.split(' ')[0], '%Y-%m-%d').strftime('%Y-%m')
+            all_months.add(month_year)
+            
+            if month_year not in resellers_by_month:
+                resellers_by_month[month_year] = {
+                    'count': 0,
+                    'revenue': 0
+                }
+            resellers_by_month[month_year]['count'] += 1
+            resellers_by_month[month_year]['revenue'] += reseller_price
+        except Exception as e:
+            print(f"Ошибка обработки реселлера: {str(e)}")
+            continue
 
+    # Формируем данные для отображения
+    for month in sorted(all_months, reverse=True):
+        year, month_num = month.split('-')
+        month_name = datetime.strptime(month_num, '%m').strftime('%B')
+        
+        monthly_data.append({
+            'year': year,
+            'month': month_num,
+            'month_name': month_name,
+            'stores_count': stores_by_month.get(month, {}).get('count', 0),
+            'stores_revenue': stores_by_month.get(month, {}).get('revenue', 0),
+            'resellers_count': resellers_by_month.get(month, {}).get('count', 0),
+            'resellers_revenue': resellers_by_month.get(month, {}).get('revenue', 0),
+            'total_revenue': (stores_by_month.get(month, {}).get('revenue', 0) + 
+                             resellers_by_month.get(month, {}).get('revenue', 0))
+        })
 
+    return render_template(
+        'financial_analytics.html',
+        total_stores=total_stores,
+        total_resellers=total_resellers,
+        store_price=store_price,
+        reseller_price=reseller_price,
+        monthly_fee=monthly_fee,
+        initial_revenue=initial_revenue,
+        monthly_recurring=monthly_recurring,
+        annual_recurring=annual_recurring,
+        total_potential=total_potential,
+        active_stores=active_stores,
+        inactive_stores=inactive_stores,
+        active_resellers=active_resellers,
+        processing_resellers=processing_resellers,
+        declined_resellers=declined_resellers,
+        payment_methods=payment_methods,
+        monthly_data=monthly_data
+    )
 
-
-
-
-
-
-@app.route('/aff/ref', methods=['GET', 'POST'])
-def aff_ref():
+# Добавим в routes.py или в текущий файл
+@app.route('/admin/telegram-settings', methods=['GET', 'POST'])
+def telegram_settings():
     load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    if session['username'] != 'Dim4ikgoo$e101$':
-        return "Доступ запрещён: только для администратора!", 403
-    if request.method == "POST":
-        if "delete_ref" in request.form:
-            ref_code = request.form["delete_ref"]
-            referrals.pop(ref_code, None)
-        else:
-            ref_code = "ref" + str(uuid.uuid4())[:8]
-            referrals[ref_code] = []
-
-        save_data()  # Сохраняем данные после изменений
-
-    return render_template('aff_ref.html', referrals=referrals)
-
-@app.route("/aff/stats/<ref_code>", methods=["GET", "POST"])
-def stats(ref_code):
-    load_data()
-    if ref_code not in referrals:
-        return "Реферальная ссылка не найдена", 404
-
-    users = referrals[ref_code]
-
-    if request.method == "POST":
-        for user in users:
-            username = user["name"]  # Используем имя как ключ
-
-            deposit_key = f"deposit_{username}"
-            status_key = f"status_{username}"
-            payout_key = f"payout_{username}"
-
-            if deposit_key in request.form:
-                user["deposit"] = float(request.form[deposit_key])
-
-            if status_key in request.form:
-                user["status"] = request.form[status_key]
-
-            if payout_key in request.form:
-                user["payout"] = float(request.form[payout_key])
-
-        save_data()  # Сохраняем изменения
-        return redirect(url_for("stats", ref_code=ref_code))
-
-    return render_template("aff_stats.html", ref_code=ref_code, users=users)
-
-
-
+    
+    if 'username' not in session or session['username'] != 'Dim4ikgoo$e101$':
+        abort(403)
+    
+    if request.method == 'POST':
+        try:
+            # Получаем данные из формы
+            bot_token = request.form.get('bot_token', '').strip()
+            chat_id = request.form.get('chat_id', '').strip()
+            
+            # Проверяем, что данные не пустые
+            if not bot_token or not chat_id:
+                flash('Оба поля обязательны для заполнения', 'error')
+                return redirect(url_for('telegram_settings'))
+            
+            # Обновляем глобальные переменные
+            global TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+            TELEGRAM_BOT_TOKEN = bot_token
+            TELEGRAM_CHAT_ID = chat_id
+            
+            # Сохраняем в файл
+            telegram_settings = {
+                'bot_token': TELEGRAM_BOT_TOKEN,
+                'chat_id': TELEGRAM_CHAT_ID
+            }
+            
+            with open('telegram_settings.json', 'w') as f:
+                json.dump(telegram_settings, f, indent=4)
+            
+            flash('Настройки Telegram успешно обновлены!', 'success')
+            
+        except Exception as e:
+            flash(f'Ошибка: {str(e)}', 'error')
+        
+        return redirect(url_for('telegram_settings'))
+    
+    # Загружаем текущие настройки
+    try:
+        with open('telegram_settings.json', 'r') as f:
+            settings = json.load(f)
+            current_token = settings.get('bot_token', '')
+            current_chat_id = settings.get('chat_id', '')
+    except FileNotFoundError:
+        current_token = TELEGRAM_BOT_TOKEN
+        current_chat_id = TELEGRAM_CHAT_ID
+    
+    return render_template('telegram_settings.html', 
+                         current_token=current_token,
+                         current_chat_id=current_chat_id)
 
 
 
@@ -1052,14 +1988,22 @@ def stats(ref_code):
 
 # Страница главная
 @app.route('/dashboard')
+@check_blocked
 def dashboard():
     load_data()
     if 'username' not in session:
         flash('Please login to access the dashboard', 'error')
         return redirect(url_for('login'))
+    
     username = session['username']
-    balances = users[username]['balance']
-    return render_template('dashboard.html', username=username, balances=balances)
+    user_info = users.get(username, {})
+    balances = user_info.get('balance', {})
+    kyc_verified = user_info.get('kyc_verified', False)
+    
+    return render_template('dashboard.html', 
+                         username=username, 
+                         balances=balances,
+                         kyc_verified=kyc_verified)
 
 
 
@@ -1108,6 +2052,7 @@ def join_us():
 
 
 @app.route('/profile')
+@check_blocked
 def profile():
     load_data()
     if 'username' not in session:
@@ -1119,6 +2064,9 @@ def profile():
     # Получаем балансы пользователя, включая баланс карты
     balances = user_info.get('balance', {})
     card_balance = balances.get('card', 0)
+
+    # Получаем KYC статус
+    kyc_verified = user_info.get('kyc_verified', False)  # Добавлено
 
     # Получаем заказы пользователя
     userorders = user_info.get('userorders', [])
@@ -1142,7 +2090,8 @@ def profile():
                         card_balance=card_balance,  
                         orders=total_orders,  
                         expenses=expenses, 
-                        topups=topups_sorted)  # Передаем отсортированные пополнения
+                        topups=topups_sorted,
+                        kyc_verified=kyc_verified)  # Добавлено
 
 
 
@@ -1180,6 +2129,7 @@ def get_real_ip():
         return request.headers.get('X-Forwarded-For').split(',')[0]  # Берем первый IP из списка
     return request.remote_addr  # Если заголовка нет, берем стандартный IP
 @app.route('/checkout/payment', methods=['GET', 'POST'])
+@check_blocked
 def checkout_payment():
     load_data()
     if 'username' not in session:
@@ -1237,6 +2187,7 @@ def checkout_payment():
 
 
 @app.route('/payment/processing')
+@check_blocked
 def payment_processing():
     load_data()
     if 'username' not in session:
@@ -1257,6 +2208,7 @@ def payment_processing():
 
 
 @app.route('/payment/success', methods=['GET', 'POST'])
+@check_blocked
 def payment_success():
     load_data()
     if 'username' not in session:
@@ -1304,6 +2256,7 @@ def payment_success():
 
 
 @app.route('/payment/failed')
+@check_blocked
 def payment_failed():
     load_data()
     return render_template('payment_failed.html')
@@ -1311,6 +2264,7 @@ def payment_failed():
 
 
 @app.route('/bep20/pay/qN7679-3c7cef-47929b-5de3d5-711wet', methods=['GET', 'POST'])
+@check_blocked
 def bep20_payment():
     load_data()
     if 'username' not in session:
@@ -1351,6 +2305,7 @@ def bep20_payment():
 
 
 @app.route('/bep20/processing/aB1cD2-3eF4gH-5iJ6kL-7mN8oP-9qR0sT', methods=['GET'])
+@check_blocked
 def bep20_success():
     load_data()
     if 'username' not in session:
@@ -1462,9 +2417,53 @@ def trc20done():
 
 
 
+@app.route('/admin/steam-settings', methods=['GET', 'POST'])
+def steam_settings():
+    if 'username' not in session or session['username'] != 'Dim4ikgoo$e101$':
+        return redirect(url_for('login'))
 
+    load_data()
+    global steam_discount_levels, steam_base_fee
+
+    if request.method == 'POST':
+        base_fee = int(request.form.get('base_fee', 10))
+        balance_thresholds = request.form.getlist('balance_threshold')
+        discounts = request.form.getlist('discount')
+        
+        new_levels = []
+        for bal, disc in zip(balance_thresholds, discounts):
+            try:
+                bal_int = int(bal)
+                disc_int = int(disc)
+                if bal_int < 0:
+                    flash('Balance threshold cannot be negative', 'error')
+                    return redirect(url_for('steam_settings'))
+                if disc_int < 0 or disc_int > 100:
+                    flash('Discount must be between 0 and 100%', 'error')
+                    return redirect(url_for('steam_settings'))
+                new_levels.append((bal_int, disc_int))
+            except ValueError:
+                flash('Invalid numeric values', 'error')
+                return redirect(url_for('steam_settings'))
+
+        new_levels.sort(key=lambda x: x[0])
+        
+        if not any(level[0] == 0 for level in new_levels):
+            flash('Must have at least one level with $0 threshold', 'error')
+        else:
+            steam_discount_levels = new_levels
+            steam_base_fee = base_fee
+            save_data()
+            flash('Settings updated successfully', 'success')
+        
+        return redirect(url_for('steam_settings'))
+    
+    return render_template('admin_steam_settings.html',
+                         base_fee=steam_base_fee,
+                         discount_levels=steam_discount_levels)
 
 @app.route('/product/31', methods=['GET', 'POST'])
+@check_blocked
 def product31():
     load_data()
     if 'username' not in session:
@@ -1473,93 +2472,173 @@ def product31():
     username = session['username']
     user_info = users.get(username, {})
     balances = user_info.get('balance', {})
-    expenses = user_info.get('expenses', 0)
     total_balance = balances.get('card', 0) + balances.get('bep20', 0)
     error = None
+    kyc_required = False
+    max_amount = 500  # стандартный лимит
+    purchase_limit = None  # лимит покупок
+    purchases_count = 0  # количество совершенных покупок
 
-    # Уровни скидок: (expenses, balance, discount)
-    discount_levels = [
-        (0, 0, 0),         # 0% - базовый уровень
-        (1000, 50, 2),        # 2% - 50 на балансе (новый уровень)
-        (10000, 500, 20),  # 20% - либо 10k расходов, либо 500 на балансе
-        (15000, 1000, 25), # 25% - либо 15k расходов, либо 1k на балансе
-        (25000, 2000, 30), # 30% - либо 25k расходов, либо 2k на балансе
-        (30000, 4000, 35)  # 35% - либо 30k расходов, либо 4k на балансе
-    ]
+    # Проверяем наличие активного магазина у пользователя
+    has_active_store = False
+    if username in stores:
+        store_status = stores[username].get('status', '')
+        has_active_store = store_status == 'active'
+
+    # Проверяем KYC статус пользователя
+    kyc_verified = user_info.get('kyc_verified', False)
     
-    # Определение текущей скидки и следующего уровня
+    # Считаем количество совершенных покупок Steam
+    if 'userorders' in user_info:
+        steam_purchases = [order for order in user_info['userorders'] 
+                          if order.get('category') == 'Steam']
+        purchases_count = len(steam_purchases)
+
+    # Проверяем, нужно ли применять ограничения
+    # Если пользователь уже имел баланс >400$ и сделал 4+ покупок без KYC
+    # или если текущий баланс >400$ и не пройдена верификация
+    if (user_info.get('had_high_balance', False) or total_balance >= 400) and not kyc_verified:
+        max_amount = 5  # Лимит $5 для непроверенных пользователей
+        purchase_limit = 4
+        
+        # Если баланс был или есть >400$, отмечаем это в профиле
+        if total_balance >= 400:
+            users[username]['had_high_balance'] = True
+            save_data()
+        
+        if purchases_count >= purchase_limit:
+            kyc_required = True
+
+    # Сортируем уровни скидок по возрастанию порога
+    sorted_levels = sorted(steam_discount_levels, key=lambda x: x[0])
+
+    # Определяем текущую скидку
     current_discount = 0
-    next_level = None
-    
-    for i, (exp_threshold, bal_threshold, discount) in enumerate(sorted(discount_levels, reverse=True)):
-        if expenses >= exp_threshold or total_balance >= bal_threshold:
+
+    # Сначала проверяем уровни скидок по балансу
+    for bal_threshold, discount in sorted_levels:
+        if total_balance >= bal_threshold:
             current_discount = discount
-            if i > 0:
-                next_level = discount_levels[i-1]
-            break
-    else:
-        next_level = discount_levels[1] if len(discount_levels) > 1 else None
+
+    # Если у пользователя есть активный магазин, даем дополнительную скидку
+    if has_active_store:
+        # Если у нас есть второй уровень скидок, используем его
+        if len(sorted_levels) >= 2:
+            store_discount = sorted_levels[1][1]
+            # Применяем магазинную скидку, только если она выше текущей
+            if store_discount > current_discount:
+                current_discount = store_discount
+        else:
+            # Если нет определенных уровней, даем фиксированную скидку
+            store_discount = 15  # например, 15% для владельцев магазинов
+            if store_discount > current_discount:
+                current_discount = store_discount
 
     if request.method == 'POST':
-        steam_login = request.form.get('steamLogin')
-        requested_amount = float(request.form.get('amount', 0))
-        amount_to_pay = requested_amount * (1 - current_discount / 100)
-
-        formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        timestamp = datetime.now().timestamp()
-
-        if amount_to_pay <= 0:
-            error = "Invalid amount."
-        elif balances.get('card', 0) >= amount_to_pay:
-            users[username]['balance']['card'] -= amount_to_pay
-            users[username]['expenses'] += amount_to_pay
-        elif (balances.get('card', 0) + balances.get('bep20', 0)) >= amount_to_pay:
-            remaining = amount_to_pay - balances['card']
-            users[username]['balance']['card'] = 0
-            users[username]['balance']['bep20'] -= remaining
-            users[username]['expenses'] += amount_to_pay
+        if kyc_required:
+            error = "KYC verification required"
         else:
-            error = "Insufficient funds."
+            steam_login = request.form.get('steamLogin')
+            requested_amount = float(request.form.get('amount', 0))
+            
+            if requested_amount > max_amount:
+                error = f"Maximum allowed amount is ${max_amount} (KYC verification required for larger amounts)"
+            else:
+                if current_discount > 0:
+                    amount_to_pay = requested_amount * (1 - current_discount / 100)
+                    fee_applied = False
+                else:
+                    amount_to_pay = requested_amount * (1 + steam_base_fee / 100)
+                    fee_applied = True
 
-        if not error:
-            new_order = {
-                'id': str(uuid.uuid4()),
-                'category': 'Steam',
-                'product': 'Steam TopUp',
-                'price': amount_to_pay,
-                'amount': requested_amount,
-                'requested_amount': requested_amount,
-                'paid_amount': amount_to_pay,
-                'discount': current_discount,
-                'date': formatted_date,
-                'timestamp': timestamp,
-                'steamLogin': steam_login
-            }
-            users[username].setdefault('userorders', []).append(new_order)
-            save_data()
-            return redirect(url_for('product31'))
+                formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                timestamp = datetime.now().timestamp()
+
+                if amount_to_pay <= 0:
+                    error = "Invalid amount."
+                elif balances.get('card', 0) >= amount_to_pay:
+                    users[username]['balance']['card'] -= amount_to_pay
+                elif (balances.get('card', 0) + balances.get('bep20', 0)) >= amount_to_pay:
+                    remaining = amount_to_pay - balances['card']
+                    users[username]['balance']['card'] = 0
+                    users[username]['balance']['bep20'] -= remaining
+                else:
+                    error = "Insufficient funds."
+
+                if not error:
+                    new_order = {
+                        'id': str(uuid.uuid4()),
+                        'category': 'Steam',
+                        'product': 'Steam TopUp',
+                        'price': amount_to_pay,
+                        'amount': requested_amount,
+                        'requested_amount': requested_amount,
+                        'paid_amount': amount_to_pay,
+                        'base_fee_applied': fee_applied,
+                        'base_fee_percent': steam_base_fee if fee_applied else 0,
+                        'discount': current_discount,
+                        'date': formatted_date,
+                        'timestamp': timestamp,
+                        'steamLogin': steam_login,
+                        'store_discount_applied': has_active_store
+                    }
+                    users[username].setdefault('userorders', []).append(new_order)
+                    save_data()
+                    return redirect(url_for('product31'))
 
     return render_template('product_31.html',
                          username=username,
                          balances=balances,
-                         expenses=expenses,
                          total_balance=total_balance,
                          error=error,
+                         base_fee=steam_base_fee,
                          current_discount=current_discount,
-                         next_level=next_level,
-                         discount_levels=discount_levels)
-
+                         discount_levels=sorted_levels,
+                         has_active_store=has_active_store,
+                         kyc_required=kyc_required,
+                         max_amount=max_amount,
+                         purchases_count=purchases_count,
+                         purchase_limit=purchase_limit,
+                         kyc_verified=kyc_verified)
 
 @app.route('/product/33', methods=['GET', 'POST'])
+@check_blocked
 def product33():
     load_data()
     if 'username' not in session:
         return redirect(url_for('login'))
     
     username = session['username']
-    balances = users[username]['balance']
+    user_info = users.get(username, {})
+    balances = user_info.get('balance', {})
+    total_balance = balances.get('card', 0) + balances.get('bep20', 0)
     error = None
+    kyc_required = False
+    max_amount = 500
+    purchase_limit = None
+    purchases_count = 0
     
+    # Проверяем KYC статус пользователя
+    kyc_verified = user_info.get('kyc_verified', False)
+    
+    # Считаем ВСЕ покупки Steam (топ-апы + гифт-карты)
+    if 'userorders' in user_info:
+        steam_purchases = [order for order in user_info['userorders'] 
+                          if order.get('category') in ['Steam', 'Steam Wallet Code | USA']]
+        purchases_count = len(steam_purchases)
+
+    # Проверяем лимиты (та же логика что и в product31)
+    if (user_info.get('had_high_balance', False) or total_balance >= 400) and not kyc_verified:
+        max_amount = 5
+        purchase_limit = 4
+        
+        if total_balance >= 400:
+            users[username]['had_high_balance'] = True
+            save_data()
+        
+        if purchases_count >= purchase_limit:
+            kyc_required = True
+
     products = {
         "366": "Steam Wallet Code | US | 5 USD",
         "367": "Steam Wallet Code | US | 10 USD",
@@ -1571,402 +2650,243 @@ def product33():
     }
     
     if request.method == 'POST':
-        product_id = request.form.get('product_id')
-        amount = int(request.form.get('amount', 0))
-        price = float(request.form.get('price', 0))
-        total_price = amount * price
-
-        formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-        if amount <= 0:
-            error = "Invalid amount."
-        elif balances['bep20'] >= total_price:
-            users[username]['balance']['bep20'] -= total_price
-            users[username]['expenses'] += total_price
-        elif (balances['bep20'] + balances['card']) >= total_price:
-            remaining = total_price - balances['bep20']
-            users[username]['balance']['bep20'] = 0
-            users[username]['balance']['card'] -= remaining
-            users[username]['expenses'] += total_price
+        if kyc_required:
+            error = "KYC verification required"
         else:
-            error = "Insufficient funds."
+            product_id = request.form.get('product_id')
+            amount = int(request.form.get('amount', 0))
+            price = float(request.form.get('price', 0))
+            total_price = amount * price
 
-        if not error:
-            new_order = {
-                'id': str(uuid.uuid4()),
-                'category': 'Steam Wallet Code | USA',
-                'product': products.get(product_id, f'Unknown Product {product_id}'),
-                'price': total_price,
-                'amount': amount,
-                'date': formatted_date,
-                'timestamp': datetime.now().timestamp()
-            }
-            users[username].setdefault('userorders', []).append(new_order)
-            save_data()
-            return redirect(url_for('product33'))
+            formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-    return render_template('product_33.html',
-                         username=username,
-                         balances=balances,
-                         error=error)
-@app.route('/product/34')
-def product34():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_34.html', username=username, balances=balances)
-@app.route('/product/35')
-def product35():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_35.html', username=username, balances=balances)
-@app.route('/product/36')
-def product36():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_36.html', username=username, balances=balances)
-
-@app.route('/menu/13')
-def menu13():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('menu_13.html', username=username, balances=balances)
-@app.route('/product/37')
-def product37():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_37.html', username=username, balances=balances)
-@app.route('/product/38')
-def product38():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_38.html', username=username, balances=balances)
-
-@app.route('/menu/14')
-def menu14():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('menu_14.html', username=username, balances=balances)
-@app.route('/product/39')
-def product39():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_39.html', username=username, balances=balances)
-@app.route('/product/40')
-def product40():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_40.html', username=username, balances=balances)
-
-@app.route('/menu/15')
-def menu15():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('menu_15.html', username=username, balances=balances)
-@app.route('/product/41')
-def product41():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_41.html', username=username, balances=balances)
-@app.route('/product/42')
-def product42():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_42.html', username=username, balances=balances)
-@app.route('/product/43')
-def product43():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_43.html', username=username, balances=balances)
-@app.route('/product/44')
-def product44():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_44.html', username=username, balances=balances)
-@app.route('/product/45')
-def product45():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_45.html', username=username, balances=balances)
-@app.route('/product/46')
-def product46():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_46.html', username=username, balances=balances)
-
-@app.route('/menu/16')
-def menu16():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('menu_16.html', username=username, balances=balances)
-@app.route('/product/47')
-def product47():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_47.html', username=username, balances=balances)
-
-@app.route('/menu/17')
-def menu17():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('menu_17.html', username=username, balances=balances)
-@app.route('/product/48')
-def product48():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('product_48.html', username=username, balances=balances)
-
-@app.route('/menu/18')
-def menu18():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    username = session['username']
-    balances = users[username]['balance']
-    return render_template('menu_18.html', username=username, balances=balances)
-
-@app.route('/product/49', methods=['GET', 'POST'])
-def product49():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    
-    username = session['username']
-    balances = users[username]['balance']
-    error = None
-    
-    products = {
-        "1001": "Assassin´s Creed Odyssey XBOX ONE/SERIES X|S",
-        "1002": "Assassin´s Creed Odyssey Gold XBOX ONE/SERIES X|S",
-        "1003": "Assassin´s Creed Odyssey Ultimate XBOX ONE/SERIES X|S",
-        "1004": "Assassins Creed Origins XBOX ONE/SERIES X|S",
-        "1005": "Assassins Creed Origins Gold XBOX ONE/SERIES X|S",
-        "1006": "Assassins Creed Valhalla XBOX ONE/SERIES X|S",
-        "1007": "Assassins Creed Valhalla Ragnarok XBOX ONE/SERIES X|S",
-        "1008": "Assassins Creed Valhalla Ultimate XBOX ONE/SERIES X|S",
-        "1009": "Assassins Creed Mirage XBOX ONE/SERIES X|S",
-        "1010": "Assassins Creed Mirage Deluxe XBOX ONE/SERIES X|S",
-        "1011": "Assassins Creed Miarge Master XBOX ONE/SERIES X|S",
-        "1012": "Baldur's Gate 3 XBOX SERIES X|S",
-        "1013": "Baldur's Gate 3 Deluxe XBOX SERIES X|S",
-        "1014": "Dead by Daylight XBOX ONE/SERIES X|S",
-        "1015": "Dead by Daylight Gold XBOX ONE/SERIES X|S",
-        "1016": "Dead by Daylight Ultimate XBOX ONE/SERIES X|S",
-        "1017": "Destiny 2 The Final Shape XBOX ONE/SERIES X|S",
-        "1018": "Destiny 2 Lightfall XBOX ONE/SERIES X|S",
-        "1019": "Destiny 2 The Witch Queen XBOX ONE/SERIES X|S",
-        "1020": "Destiny 2 Beyond XBOX ONE/SERIES X|S",
-        "1021": "Diablo 4 XBOX ONE/SERIES X|S",
-        "1022": "Diablo 4 Deluxe XBOX ONE/SERIES X|S",
-        "1023": "Diablo 4 Ultimate XBOX ONE/SERIES X|S",
-        "1024": "Diablo 4 Expansion Bundle XBOX ONE/SERIES X|S",
-        "1025": "Diablo 4 Vessel of Hatred XBOX ONE/SERIES X|S",
-        "1026": "Diablo 4 Vessel of Hatred Deluxe XBOX ONE/SERIES X|S",
-        "1027": "Diablo 4 Vessel of Hatred Ultimate XBOX ONE/SERIES X|S",
-        "1028": "Forza Horizon 5 XBOX ONE/SERIES X|S",
-        "1029": "Forza Horizon 5 Deluxe XBOX ONE/SERIES X|S",
-        "1030": "Forza Horizon 5 Ultimate XBOX ONE/SERIES X|S",
-        "1031": "Kingdom Come: Deliverance II XBOX SERIES X|S",
-        "1032": "Kingdom Come: Deliverance II Gold XBOX SERIES X|S",
-        "1033": "Minecraft PC",
-        "1034": "Minecraft XBOX ONE/SERIES X|S",
-        "1035": "Mortal Kombat 11 XBOX ONE/SERIES X|S",
-        "1036": "Mortal Kombat 11 Ultimate XBOX ONE/SERIES X|S",
-        "1037": "Mortal Kombat 1 XBOX SERIES X|S",
-        "1038": "Mortal Kombat 1 Premium XBOX SERIES X|S",
-    }
-    
-    if request.method == 'POST':
-        product_id = request.form.get('product_id')
-        amount = int(request.form.get('amount', 0))
-        price = float(request.form.get('price', 0))
-        total_price = amount * price
-
-        formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-        if amount <= 0:
-            error = "Invalid amount."
-        elif balances['bep20'] >= total_price:
-            users[username]['balance']['bep20'] -= total_price
-            users[username]['expenses'] += total_price
-        elif (balances['bep20'] + balances['card']) >= total_price:
-            remaining = total_price - balances['bep20']
-            users[username]['balance']['bep20'] = 0
-            users[username]['balance']['card'] -= remaining
-            users[username]['expenses'] += total_price
-        else:
-            error = "Insufficient funds."
-
-        if not error:
-            new_order = {
-                'id': str(uuid.uuid4()),
-                'category': 'Xbox CD-Keys | US',
-                'product': products.get(product_id, f'Unknown Product {product_id}'),
-                'price': total_price,
-                'amount': amount,
-                'date': formatted_date,
-                'timestamp': datetime.now().timestamp()
-            }
-            users[username].setdefault('userorders', []).append(new_order)
-            save_data()
-            return redirect(url_for('product49'))
-
-    return render_template('product_49.html',
-                         username=username,
-                         balances=balances,
-                         error=error)
-
-@app.route('/product/50', methods=['GET', 'POST'])
-def product50():
-    load_data()
-    if 'username' not in session:
-        return redirect(url_for('login'))
-
-    username = session['username']
-    balances = users[username]['balance']
-    error = None
-
-    game_prices = {
-        "Battlefield 2042": 28.0,
-        "Battlefield V": 26.44,
-        "Black Myth: Wukong": 34.21,
-        "Call of Duty Modern Warfare (2022)": 53.11,
-        "Cyberpunk 2077": 22.47,
-        "DayZ": 26.13,
-        "Dead by Daylight": 9.27,
-        "Diablo 4 Expansion Bundle": 50.0,
-        "Dragon's Dogma 2": 45.34,
-        "Dying Light 2": 18.28,
-        "EA SPORTS FC 24": 37.10,
-        "EA SPORTS FC 25": 34.26,
-        "Elden Ring": 32.37,
-        "Elden Ring Nightreign": 24.16,
-        "Far Cry 5": 25.0,
-        "Far Cry 6": 25.0,
-        "Forza Horizon 5": 27.36,
-        "Garry’s Mod": 3.00,
-        "GTA V": 14.78,
-        "Helldivers 2": 27.44,
-        "Hunt: Showdown 1896": 11.41,
-        "It Takes Two": 22.86,
-        "Kingdom Come: Deliverance": 17.19,
-        "Kingdom Come: Deliverance 2": 34.72,
-        "Last Epoch": 14.49,
-        "Mortal Kombat 1": 27.00,
-        "Mortal Kombat 11": 6.81,
-        "Need for Speed Unbound": 38.29,
-        "New World Aetrum": 53.31,
-        "Red Dead Redemption 2": 16.55,
-        "Remnant 2": 28.04,
-        "Resident Evil 4": 22.65,
-        "Resident Evil Village": 19.19,
-        "Sea of Thieves": 25.51,
-        "Sons of the Forest": 10.33,
-        "Squad": 17.26
-    }
-
-    if request.method == 'POST':
-        game = request.form.get('game')
-        steam_link = request.form.get('steamLink')
-
-        formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        timestamp = datetime.now().timestamp()
-
-        if game not in game_prices:
-            error = "Invalid game selection."
-        else:
-            amount = game_prices[game]
-            total_price = amount  # Для совместимости с другими обработчиками
-
-            if balances['bep20'] >= amount:
-                users[username]['balance']['bep20'] -= amount
-            elif balances['bep20'] + balances['card'] >= amount:
-                remaining = amount - balances['bep20']
+            if amount <= 0:
+                error = "Invalid amount."
+            elif balances['bep20'] >= total_price:
+                users[username]['balance']['bep20'] -= total_price
+                users[username]['expenses'] += total_price
+            elif (balances['bep20'] + balances['card']) >= total_price:
+                remaining = total_price - balances['bep20']
                 users[username]['balance']['bep20'] = 0
                 users[username]['balance']['card'] -= remaining
+                users[username]['expenses'] += total_price
             else:
                 error = "Insufficient funds."
 
             if not error:
-                users[username]['expenses'] += amount
                 new_order = {
                     'id': str(uuid.uuid4()),
-                    'category': 'Steam Gifts',
-                    'product': game,
-                    'price': amount,
-                    'amount': 1,
+                    'category': 'Steam Wallet Code | USA',
+                    'product': products.get(product_id, f'Unknown Product {product_id}'),
+                    'price': total_price,
+                    'amount': amount,
                     'date': formatted_date,
-                    'timestamp': timestamp,
-                    'steamLink': steam_link
+                    'timestamp': datetime.now().timestamp()
                 }
                 users[username].setdefault('userorders', []).append(new_order)
                 save_data()
-                return redirect(url_for('product50'))
+                return redirect(url_for('product33'))
 
-    return render_template('product_50.html', 
-                         username=username, 
-                         balances=balances, 
-                         error=error)
+    return render_template('product_33.html',
+                         username=username,
+                         balances=balances,
+                         total_balance=total_balance,
+                         error=error,
+                         kyc_required=kyc_required,
+                         max_amount=max_amount,
+                         purchases_count=purchases_count,
+                         purchase_limit=purchase_limit,
+                         kyc_verified=kyc_verified)
+@app.route('/product/34', methods=['GET', 'POST'])
+@check_blocked
+def product34():
+    load_data()
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    username = session['username']
+    user_info = users.get(username, {})
+    balances = user_info.get('balance', {})
+    total_balance = balances.get('card', 0) + balances.get('bep20', 0)
+    error = None
+    kyc_required = False
+    max_amount = 500
+    purchase_limit = None
+    purchases_count = 0
+    
+    # Проверяем KYC статус пользователя
+    kyc_verified = user_info.get('kyc_verified', False)
+    
+    # Считаем ВСЕ покупки Steam (топ-апы + гифт-карты)
+    if 'userorders' in user_info:
+        steam_purchases = [order for order in user_info['userorders'] 
+                          if order.get('category') in ['Steam', 'Steam Wallet Code | USA', 'Steam Wallet Code | EU']]
+        purchases_count = len(steam_purchases)
 
+    # Проверяем лимиты (та же логика что и в product31)
+    if (user_info.get('had_high_balance', False) or total_balance >= 400) and not kyc_verified:
+        max_amount = 5
+        purchase_limit = 4
+        
+        if total_balance >= 400:
+            users[username]['had_high_balance'] = True
+            save_data()
+        
+        if purchases_count >= purchase_limit:
+            kyc_required = True
+
+    products = {
+        "373": "Steam Wallet Code | EU | 5 EUR",
+        "374": "Steam Wallet Code | EU | 10 EUR",
+        "375": "Steam Wallet Code | EU | 20 EUR",
+        "376": "Steam Wallet Code | EU | 25 EUR",
+        "377": "Steam Wallet Code | EU | 30 EUR",
+        "378": "Steam Wallet Code | EU | 35 EUR",
+    }
+    
+    if request.method == 'POST':
+        if kyc_required:
+            error = "KYC verification required"
+        else:
+            product_id = request.form.get('product_id')
+            amount = int(request.form.get('amount', 0))
+            price = float(request.form.get('price', 0))
+            total_price = amount * price
+
+            formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            if amount <= 0:
+                error = "Invalid amount."
+            elif balances['bep20'] >= total_price:
+                users[username]['balance']['bep20'] -= total_price
+                users[username]['expenses'] += total_price
+            elif (balances['bep20'] + balances['card']) >= total_price:
+                remaining = total_price - balances['bep20']
+                users[username]['balance']['bep20'] = 0
+                users[username]['balance']['card'] -= remaining
+                users[username]['expenses'] += total_price
+            else:
+                error = "Insufficient funds."
+
+            if not error:
+                new_order = {
+                    'id': str(uuid.uuid4()),
+                    'category': 'Steam Wallet Code | EU',
+                    'product': products.get(product_id, f'Unknown Product {product_id}'),
+                    'price': total_price,
+                    'amount': amount,
+                    'date': formatted_date,
+                    'timestamp': datetime.now().timestamp()
+                }
+                users[username].setdefault('userorders', []).append(new_order)
+                save_data()
+                return redirect(url_for('product34'))
+
+    return render_template('product_34.html',
+                         username=username,
+                         balances=balances,
+                         total_balance=total_balance,
+                         error=error,
+                         kyc_required=kyc_required,
+                         max_amount=max_amount,
+                         purchases_count=purchases_count,
+                         purchase_limit=purchase_limit,
+                         kyc_verified=kyc_verified)
+@app.route('/product/35', methods=['GET', 'POST'])
+@check_blocked
+def product35():
+    load_data()
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    username = session['username']
+    user_info = users.get(username, {})
+    balances = user_info.get('balance', {})
+    total_balance = balances.get('card', 0) + balances.get('bep20', 0)
+    error = None
+    kyc_required = False
+    max_amount = 500
+    purchase_limit = None
+    purchases_count = 0
+    
+    # Проверяем KYC статус пользователя
+    kyc_verified = user_info.get('kyc_verified', False)
+    
+    # Считаем ВСЕ покупки Steam (топ-апы + гифт-карты)
+    if 'userorders' in user_info:
+        steam_purchases = [order for order in user_info['userorders'] 
+                          if order.get('category') in ['Steam', 'Steam Wallet Code | USA', 
+                                                      'Steam Wallet Code | EU', 'Steam Wallet Code | PL']]
+        purchases_count = len(steam_purchases)
+
+    # Проверяем лимиты (та же логика что и в product31)
+    if (user_info.get('had_high_balance', False) or total_balance >= 400) and not kyc_verified:
+        max_amount = 5
+        purchase_limit = 4
+        
+        if total_balance >= 400:
+            users[username]['had_high_balance'] = True
+            save_data()
+        
+        if purchases_count >= purchase_limit:
+            kyc_required = True
+
+    # Словарь продуктов для PL
+    products = {
+        "379": "Steam Wallet Code | PL | 25 PLN",
+        "380": "Steam Wallet Code | PL | 40 PLN",
+        "381": "Steam Wallet Code | PL | 70 PLN",
+        "382": "Steam Wallet Code | PL | 110 PLN",
+    }
+    
+    if request.method == 'POST':
+        if kyc_required:
+            error = "KYC verification required"
+        else:
+            product_id = request.form.get('product_id')
+            amount = int(request.form.get('amount', 0))
+            price = float(request.form.get('price', 0))
+            total_price = amount * price
+
+            formatted_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            if amount <= 0:
+                error = "Invalid amount."
+            elif balances['bep20'] >= total_price:
+                users[username]['balance']['bep20'] -= total_price
+                users[username]['expenses'] += total_price
+            elif (balances['bep20'] + balances['card']) >= total_price:
+                remaining = total_price - balances['bep20']
+                users[username]['balance']['bep20'] = 0
+                users[username]['balance']['card'] -= remaining
+                users[username]['expenses'] += total_price
+            else:
+                error = "Insufficient funds."
+
+            if not error:
+                new_order = {
+                    'id': str(uuid.uuid4()),
+                    'category': 'Steam Wallet Code | PL',
+                    'product': products.get(product_id, f'Unknown Product {product_id}'),
+                    'price': total_price,
+                    'amount': amount,
+                    'date': formatted_date,
+                    'timestamp': datetime.now().timestamp()
+                }
+                users[username].setdefault('userorders', []).append(new_order)
+                save_data()
+                return redirect(url_for('product35'))
+
+    return render_template('product_35.html',
+                         username=username,
+                         balances=balances,
+                         total_balance=total_balance,
+                         error=error,
+                         kyc_required=kyc_required,
+                         max_amount=max_amount,
+                         purchases_count=purchases_count,
+                         purchase_limit=purchase_limit,
+                         kyc_verified=kyc_verified)
 
 
 @app.route('/user_agreement')

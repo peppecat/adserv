@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Whitelist</title>
+    <title>Админ Панель | Настройки Telegram</title>
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}">
     <style>
         :root {
@@ -162,60 +162,34 @@
             color: var(--primary-color);
         }
 
-        .table-responsive {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-
-        th, td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: 500;
-        }
-
-        tr:hover {
-            background-color: #f8f9fa;
-        }
-
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
 
-        label {
+        .form-group label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
             font-weight: 500;
         }
 
-        select, input, button {
+        .form-control {
             width: 100%;
-            padding: 10px;
+            padding: 10px 15px;
             border: 1px solid #ddd;
             border-radius: var(--border-radius);
             font-size: 1rem;
             transition: var(--transition);
         }
 
-        select:focus, input:focus {
-            outline: none;
+        .form-control:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 2px rgba(74, 107, 255, 0.2);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(74, 107, 255, 0.2);
         }
 
         .btn {
             display: inline-block;
-            padding: 10px 15px;
+            padding: 10px 20px;
             background-color: var(--primary-color);
             color: white;
             border: none;
@@ -224,6 +198,7 @@
             transition: var(--transition);
             font-weight: 500;
             text-align: center;
+            font-size: 1rem;
         }
 
         .btn:hover {
@@ -231,45 +206,37 @@
             transform: translateY(-2px);
         }
 
-        .btn-sm {
-            padding: 5px 10px;
-            font-size: 0.85rem;
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
         }
 
-        .btn-danger {
-            background-color: var(--danger-color);
+        .settings-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary-color);
         }
 
-        .btn-danger:hover {
-            background-color: #c82333;
+        .settings-info h3 {
+            margin-top: 0;
+            color: var(--primary-color);
         }
 
-        .btn-success {
-            background-color: var(--success-color);
-        }
-
-        .btn-success:hover {
-            background-color: #218838;
-        }
-
-        .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            margin: 0 -10px;
-        }
-
-        .form-col {
-            flex: 1;
-            padding: 0 10px;
-            min-width: 200px;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-        }
-
-        /* Responsive adjustments */
         @media (max-width: 992px) {
             .sidebar {
                 width: 70px;
@@ -292,13 +259,6 @@
             .content {
                 padding: 15px;
             }
-            .form-col {
-                min-width: 100%;
-                margin-bottom: 10px;
-            }
-            .action-buttons {
-                flex-direction: column;
-            }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -306,20 +266,20 @@
 <body>
     <div class="sidebar">
         <div class="sidebar-header">
-            <h2>Admin Panel</h2>
+            <h2>Админ Панель</h2>
         </div>
         <div class="sidebar-nav">
             <div class="sidebar-section">
-                <div class="sidebar-section-title">Main</div>
+                <div class="sidebar-section-title">Основное</div>
                 <a href="/admin/users" class="sidebar-link">
                     <i class="fas fa-users"></i>
                     <span>Пользователи</span>
                 </a>
-                <a href="/admin/orders" class="sidebar-link ">
+                <a href="/admin/orders" class="sidebar-link">
                     <i class="fas fa-shopping-cart"></i>
                     <span>Заказы</span>
                 </a>
-                <a href="/admin/whitelist" class="sidebar-link active">
+                <a href="/admin/whitelist" class="sidebar-link">
                     <i class="fas fa-list-check"></i>
                     <span>Whitelist</span>
                 </a>
@@ -335,7 +295,7 @@
                     <i class="fas fa-cog"></i>
                     <span>Steam Settings</span>
                 </a>
-                <a href="/admin/telegram-settings" class="sidebar-link">
+                <a href="/admin/telegram-settings" class="sidebar-link active">
                     <i class="fas fa-paper-plane"></i>
                     <span>Уведомления Telegram</span>
                 </a>
@@ -346,7 +306,7 @@
                     <i class="fas fa-user-plus"></i>
                     <span>Запросы (Join US)</span>
                 </a>
-                <a href="/aff/approved" class="sidebar-link ">
+                <a href="/aff/approved" class="sidebar-link">
                     <i class="fas fa-store"></i>
                     <span>Подтвержденные магазины</span>
                 </a>
@@ -360,72 +320,68 @@
 
     <div class="content">
         <div class="header">
-            <h1>Управление Whitelist</h1>
+            <h1>Настройки уведомлений Telegram</h1>
             <div class="user-info">
                 <div class="user-avatar">A</div>
                 <span>Администратор</span>
             </div>
         </div>
-
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{% if category == 'success' %}success{% else %}error{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
         <div class="card">
             <div class="card-header">
-                <h2>Добавить пользователя в Whitelist</h2>
+                <h2>Конфигурация Telegram бота</h2>
             </div>
-            <form method="POST">
-                <input type="hidden" name="action" value="add">
-                <div class="form-row">
-                    <div class="form-col">
-                        <div class="form-group">
-                            <label for="target_user">Выберите пользователя:</label>
-                            <select name="target_user" required>
-                                {% for user in users %}
-                                    <option value="{{ user }}">{{ user }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="form-col" style="align-self: flex-end;">
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-plus"></i> Добавить
-                            </button>
-                        </div>
-                    </div>
+            
+            <div class="settings-info">
+                <h3>Инструкция по настройке</h3>
+                <p>1. Создайте бота через @BotFather в Telegram и получите токен</p>
+                <p>2. Добавьте бота в чат, куда должны приходить уведомления</p>
+                <p>3. Отправьте любое сообщение в чат</p>
+                <p>4. Перейдите по ссылке: <code>https://api.telegram.org/bot&lt;ВАШ_ТОКЕН_БОТА&gt;/getUpdates</code></p>
+                <p>5. Найдите <code>chat.id</code> в JSON-ответе и введите его ниже</p>
+            </div>
+            
+            <form method="POST" action="{{ url_for('telegram_settings') }}">
+                <div class="form-group">
+                    <label for="bot_token">Токен Telegram бота</label>
+                    <input type="text" id="bot_token" name="bot_token" class="form-control" 
+                           value="{{ current_token }}" placeholder="Введите токен бота" required>
                 </div>
+                
+                <div class="form-group">
+                    <label for="chat_id">ID чата</label>
+                    <input type="text" id="chat_id" name="chat_id" class="form-control" 
+                           value="{{ current_chat_id }}" placeholder="Введите ID чата" required>
+                </div>
+                
+                <button type="submit" class="btn">
+                    <i class="fas fa-save"></i> Сохранить настройки
+                </button>
             </form>
         </div>
-
-        <div class="card">
-            <div class="card-header">
-                <h2>Список Whitelist</h2>
-            </div>
-            <div class="table-responsive">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Пользователь</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for user in whitelist_users %}
-                        <tr>
-                            <td>{{ user }}</td>
-                            <td class="action-buttons">
-                                <form method="POST" onsubmit="return confirm('Удалить пользователя {{ user }} из Whitelist?');">
-                                    <input type="hidden" name="action" value="delete">
-                                    <input type="hidden" name="username" value="{{ user }}">
-                                    <button type="submit" class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i> Удалить
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
     </div>
+    
+    <script>
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(function() {
+                    alert.remove();
+                }, 500);
+            });
+        }, 5000);
+    </script>
 </body>
 </html>
